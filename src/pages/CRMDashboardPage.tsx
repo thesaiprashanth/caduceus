@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import logo from '../Assets/Logo.jpeg';
 import {
   Search, PanelLeft, Activity, Bell, SlidersHorizontal,
   ArrowUpDown, Plus, MoreHorizontal
@@ -54,8 +55,9 @@ export default function CRMDashboardPage() {
     <div className="min-h-screen bg-black text-zinc-200 font-sans antialiased" style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif' }}>
       {/* Top bar */}
       <div className="h-12 border-b border-white/5 flex items-center justify-between px-6 bg-zinc-950/80 backdrop-blur sticky top-0 z-10">
-        <div className="flex items-center gap-3 text-zinc-400">
+        <div className="flex items-center gap-2 text-zinc-400">
           <PanelLeft className="w-4 h-4" />
+          <img src={logo} alt="Caduceus" className="w-5 h-5 object-cover rounded" />
           <span className="text-sm">CRM</span>
         </div>
         <div className="flex items-center gap-5 text-zinc-400 text-sm">

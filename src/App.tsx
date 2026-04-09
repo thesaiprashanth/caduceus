@@ -5,15 +5,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Instagram, 
-  Sparkles, 
-  ArrowRight, 
-  Loader2, 
+import {
+  Search,
+  BarChart3,
+  TrendingUp,
+  Users,
+  Instagram,
+  Sparkles,
+  ArrowRight,
+  Loader2,
   Calendar,
   MessageSquare,
   Heart,
@@ -26,13 +26,13 @@ import {
   Target,
   LogOut
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -43,6 +43,8 @@ import { analyzeProfile, chatWithProfile } from './lib/gemini';
 import { cn } from './lib/utils';
 import { signInWithPopup, signOut, User } from 'firebase/auth';
 import { auth, googleProvider } from './lib/firebase';
+import { useNavigate } from 'react-router-dom';
+import logo from "./Assets/Logo.jpeg";
 
 // Types
 interface ProfileData {
@@ -70,6 +72,26 @@ interface Post {
   engagement: number;
 }
 
+// Helpers
+const getImageUrl = (originalUrl: string | null) => {
+  if (!originalUrl) return null;
+  if (originalUrl.includes('ui-avatars.com') || originalUrl.startsWith('data:')) {
+    return originalUrl;
+  }
+  // Use a public CORS proxy (temporary solution)
+  const proxy = 'https://cors-anywhere.herokuapp.com/';
+  return `${proxy}${originalUrl}`;
+};
+
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  if (e.currentTarget.src.includes('ui-avatars.com')) {
+    return; // Already using fallback
+  }
+  const username = e.currentTarget.alt || 'user';
+  e.currentTarget.src = `https://ui-avatars.com/api/?name=${username}&background=111827&color=fff&size=200`;
+  e.currentTarget.onerror = null; // Prevent infinite loop
+};
+
 export default function App() {
   const [handle, setHandle] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
@@ -80,14 +102,18 @@ export default function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: string, parts: string }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleLogin = async () => {
     try {
@@ -127,43 +153,62 @@ export default function App() {
     setData(null);
     setAiAnalysis(null);
 
-    // Simulate extraction delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      console.log("Calling /extract...");
+      const response = await fetch("http://127.0.0.1:8000/extract", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: handle.replace("@", ""),
+        }),
+      });
 
-    // Mock Data for demonstration
-    const mockData: ProfileData = {
-      username: handle.replace('@', ''),
-      fullName: "Premium Brand Co.",
-      bio: "Elevating lifestyle through design and innovation. 🌿 | Est. 2020 | Worldwide Shipping 📦",
-      followers: 125400,
-      following: 842,
-      posts: 432,
-      engagementRate: 4.8,
-      avgLikes: 5800,
-      avgComments: 124,
-      profilePic: `https://picsum.photos/seed/${handle}/200/200`,
-      recentPosts: [
-        { id: '1', imageUrl: 'https://picsum.photos/seed/post1/400/400', likes: 6200, comments: 145, caption: "New collection dropping tomorrow! ✨ #lifestyle #design", date: "2h ago", engagement: 5.1 },
-        { id: '2', imageUrl: 'https://picsum.photos/seed/post2/400/400', likes: 4100, comments: 89, caption: "Morning routines that matter. ☕️", date: "1d ago", engagement: 3.4 },
-        { id: '3', imageUrl: 'https://picsum.photos/seed/post3/400/400', likes: 8900, comments: 312, caption: "Our best-seller is back in stock! Limited quantities. 🏃‍♂️", date: "3d ago", engagement: 7.2 },
-        { id: '4', imageUrl: 'https://picsum.photos/seed/post4/400/400', likes: 5400, comments: 92, caption: "Behind the scenes at our studio. 🎨", date: "5d ago", engagement: 4.5 },
-      ],
-      growthData: [
-        { date: 'Mon', followers: 124100 },
-        { date: 'Tue', followers: 124350 },
-        { date: 'Wed', followers: 124800 },
-        { date: 'Thu', followers: 125100 },
-        { date: 'Fri', followers: 125250 },
-        { date: 'Sat', followers: 125350 },
-        { date: 'Sun', followers: 125400 },
-      ]
-    };
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    setData(mockData);
-    setIsExtracting(false);
-    
-    // Auto-trigger AI Analysis
-    handleAnalyze(mockData);
+      const profile = await response.json();
+      console.log("Profile data:", profile);
+
+      setData({
+        username: profile.username,
+        fullName: profile.full_name || profile.username,
+        bio: profile.bio || "",
+        followers: profile.followers || 0,
+        following: profile.following || 0,
+        posts: profile.posts_count || profile.posts?.length || 0,
+        engagementRate: profile.engagement_rate || 0,
+        avgLikes: profile.avg_likes || 0,
+        avgComments: profile.avg_comments || 0,
+        profilePic: profile.profile_pic || `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff&size=200`,
+        recentPosts: profile.posts ? profile.posts.map((post: any) => ({
+          id: post.id,
+          imageUrl: post.image_url || 'https://placehold.co/600x600/111827/ffffff?text=No+Image',
+          likes: post.likes,
+          comments: post.comments,
+          caption: post.caption,
+          date: "Recent",
+          engagement: post.engagement ? post.engagement.toFixed(1) : 0,
+        })) : [],
+        growthData: profile.followers ? [
+          { date: "Mon", followers: profile.followers * 0.98 },
+          { date: "Tue", followers: profile.followers * 0.99 },
+          { date: "Wed", followers: profile.followers * 0.99 },
+          { date: "Thu", followers: profile.followers },
+          { date: "Fri", followers: profile.followers * 1.01 },
+          { date: "Sat", followers: profile.followers * 1.01 },
+          { date: "Sun", followers: profile.followers * 1.02 },
+        ] : [],
+      });
+
+    } catch (err) {
+      console.error("Error extracting profile:", err);
+      alert("Failed to extract profile. Please try again.");
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
   const handleAnalyze = async (profileData: ProfileData) => {
@@ -173,20 +218,22 @@ export default function App() {
     setIsAnalyzing(false);
   };
 
+  if (authLoading) return null;
+
   return (
     <div className="min-h-screen font-sans text-white selection:bg-brand-primary/30 pb-20">
       {/* Chat Sidebar */}
       <AnimatePresence>
         {isChatOpen && data && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsChatOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -203,7 +250,7 @@ export default function App() {
                     <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">CRM Assistant</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsChatOpen(false)}
                   className="p-2 hover:bg-white/5 rounded-full transition-colors"
                 >
@@ -227,8 +274,8 @@ export default function App() {
                   )}>
                     <div className={cn(
                       "p-4 rounded-2xl text-sm leading-relaxed",
-                      msg.role === 'user' 
-                        ? "bg-brand-primary text-white rounded-tr-none" 
+                      msg.role === 'user'
+                        ? "bg-brand-primary text-white rounded-tr-none"
                         : "bg-white/5 border border-white/10 text-white/80 rounded-tl-none"
                     )}>
                       <ReactMarkdown>{msg.parts}</ReactMarkdown>
@@ -249,14 +296,14 @@ export default function App() {
 
               <form onSubmit={handleSendMessage} className="p-6 border-t border-white/10 bg-white/5">
                 <div className="relative flex items-center">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Type your question..."
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-primary outline-none transition-all pr-12"
                   />
-                  <button 
+                  <button
                     type="submit"
                     disabled={!chatMessage || isChatLoading}
                     className="absolute right-2 p-2 text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-all disabled:opacity-0"
@@ -295,8 +342,8 @@ export default function App() {
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-accent via-brand-primary to-brand-secondary flex items-center justify-center">
-              <Target className="text-white w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+              <img src={logo} alt="Caduceus Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-bold tracking-tight">
               Caduceus <span className="gradient-text">CRM</span>
@@ -309,7 +356,7 @@ export default function App() {
             <button className="px-5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
               Enterprise
             </button>
-            {user ? (
+            {user && (
               <div className="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
                 <img src={user.photoURL || ''} alt="User" className="w-8 h-8 rounded-full border border-white/20" referrerPolicy="no-referrer" />
                 <span className="text-sm font-semibold">{user.displayName?.split(' ')[0]}</span>
@@ -317,10 +364,6 @@ export default function App() {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black font-bold hover:bg-white/90 transition-all ml-4">
-                Sign in
-              </button>
             )}
           </nav>
         </div>
@@ -329,7 +372,7 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-6 pt-12">
         {/* Hero Search */}
         <section className="mb-16 text-center">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-bold tracking-tighter mb-6"
@@ -337,7 +380,7 @@ export default function App() {
             The AI-First CRM for <br />
             <span className="gradient-text italic font-serif">Instagram Business</span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -346,7 +389,7 @@ export default function App() {
             Convert followers into customers. Caduceus uses Gemini AI to extract leads, analyze relationship quality, and automate your outreach strategy.
           </motion.p>
 
-          <motion.form 
+          <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -358,14 +401,14 @@ export default function App() {
               <div className="pl-4 text-white/40">
                 <Search className="w-5 h-5" />
               </div>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Enter Instagram handle (e.g. @nike)"
                 value={handle}
                 onChange={(e) => setHandle(e.target.value)}
                 className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-lg outline-none"
               />
-              <button 
+              <button
                 disabled={isExtracting}
                 className="bg-white text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50"
               >
@@ -378,7 +421,7 @@ export default function App() {
 
         <AnimatePresence mode="wait">
           {isExtracting && (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -391,7 +434,7 @@ export default function App() {
                   <Loader2 className="w-10 h-10 text-white animate-spin" />
                 </div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -404,7 +447,7 @@ export default function App() {
           )}
 
           {data ? (
-            <motion.div 
+            <motion.div
               key="dashboard"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -451,11 +494,12 @@ export default function App() {
               <div className="glass-card p-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-tr from-brand-accent to-brand-secondary rounded-full blur opacity-40"></div>
-                  <img 
-                    src={data.profilePic} 
-                    alt={data.username} 
+                  <img
+                    src={data.profilePic}
+                    alt={data.username}
                     className="relative w-32 h-32 rounded-full border-4 border-[#050505] object-cover"
                     referrerPolicy="no-referrer"
+                    onError={handleImageError}
                   />
                 </div>
                 <div className="flex-1 text-center md:text-left">
@@ -514,33 +558,33 @@ export default function App() {
                       <AreaChart data={data.growthData}>
                         <defs>
                           <linearGradient id="colorFollowers" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#E1306C" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#E1306C" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#E1306C" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#E1306C" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#ffffff40" 
-                          fontSize={12} 
-                          tickLine={false} 
-                          axisLine={false} 
+                        <XAxis
+                          dataKey="date"
+                          stroke="#ffffff40"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
                         />
-                        <YAxis 
-                          hide 
-                          domain={['dataMin - 100', 'dataMax + 100']} 
+                        <YAxis
+                          hide
+                          domain={['dataMin - 100', 'dataMax + 100']}
                         />
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #ffffff10', borderRadius: '12px' }}
                           itemStyle={{ color: '#E1306C' }}
                         />
-                        <Area 
-                          type="monotone" 
-                          dataKey="followers" 
-                          stroke="#E1306C" 
+                        <Area
+                          type="monotone"
+                          dataKey="followers"
+                          stroke="#E1306C"
                           strokeWidth={3}
-                          fillOpacity={1} 
-                          fill="url(#colorFollowers)" 
+                          fillOpacity={1}
+                          fill="url(#colorFollowers)"
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -629,11 +673,15 @@ export default function App() {
                       {data.recentPosts.map((post) => (
                         <div key={post.id} className="glass-card group overflow-hidden">
                           <div className="aspect-square relative overflow-hidden">
-                            <img 
-                              src={post.imageUrl} 
-                              alt="Post" 
+                            <img
+                              src={post.imageUrl || 'https://placehold.co/600x600/111827/ffffff?text=No+Image'}
+                              alt="Post"
                               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                               referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.currentTarget.src = 'https://placehold.co/600x600/111827/ffffff?text=Image+Not+Available';
+                                e.currentTarget.onerror = null;
+                              }}
                             />
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-8">
                               <div className="flex flex-col items-center gap-1">
@@ -705,7 +753,7 @@ export default function App() {
                     <div className="grid grid-cols-7 gap-1 h-32 items-end">
                       {[40, 60, 80, 100, 70, 50, 30].map((h, i) => (
                         <div key={i} className="flex flex-col items-center gap-2">
-                          <div 
+                          <div
                             className="w-full bg-brand-primary/40 rounded-t-sm hover:bg-brand-primary transition-colors cursor-help"
                             style={{ height: `${h}%` }}
                             title={`Engagement: ${h}%`}
@@ -737,7 +785,7 @@ export default function App() {
             </motion.div>
           ) : (
             !isExtracting && (
-              <motion.div 
+              <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -758,7 +806,7 @@ export default function App() {
       <footer className="mt-20 border-t border-white/5 py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3 opacity-50">
-            <Target className="w-5 h-5" />
+            <img src={logo} alt="Caduceus Logo" className="w-5 h-5 object-cover rounded" />
             <span className="text-sm font-bold tracking-tight">Caduceus CRM</span>
           </div>
           <p className="text-white/20 text-xs font-medium">

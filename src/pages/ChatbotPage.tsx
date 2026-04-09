@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import Logo from "../Assets/Logo.jpeg";
 
 interface Message {
   id: string;
@@ -127,7 +128,7 @@ export default function ChatPage() {
 
         .topbar { height: 44px; background: #0D1117; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; }
         .topbar-brand { display: flex; align-items: center; gap: 8px; margin-right: 32px; }
-        .brand-icon { width: 22px; height: 22px; background: #E87422; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon { width: 22px; height: 22px; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .brand-name { font-size: 13px; font-weight: 600; color: #E8EEF8; letter-spacing: -0.2px; }
         .topbar-nav { display: flex; align-items: center; gap: 2px; flex: 1; }
         .nav-item { padding: 4px 12px; font-size: 12px; color: #7C8BA8; border-radius: 5px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
@@ -157,7 +158,7 @@ export default function ChatPage() {
 
         .chat-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #0D1117; }
         .chat-header { padding: 10px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        .chat-header-icon { width: 28px; height: 28px; background: #E87422; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+        .chat-header-icon { width: 28px; height: 28px; border-radius: 7px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .chat-header-title { font-size: 13px; font-weight: 600; color: #E8EEF8; }
         .chat-header-sub { font-size: 11px; color: #4A5568; margin-left: 2px; }
         .header-actions { margin-left: auto; display: flex; gap: 4px; }
@@ -257,7 +258,7 @@ export default function ChatPage() {
 
         <div className="chat-main">
           <div className="chat-header">
-            <div className="chat-header-icon"><SparkleIcon /></div>
+            <div className="chat-header-icon"><img src={Logo} alt="Caduceus" style={{width:'100%',height:'100%',objectFit:'cover'}} /></div>
             <div className="chat-header-title">AI Assistant</div>
             <span className="chat-header-sub">· Caduceus CRM</span>
             <div className="header-actions">

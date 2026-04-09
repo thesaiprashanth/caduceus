@@ -1,5 +1,6 @@
 import React from 'react';
-import { Target, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import Logo from '../../Assets/Logo.jpeg';
 import { User } from 'firebase/auth';
 import { Link } from 'react-router-dom';
 
@@ -14,8 +15,8 @@ export default function Header({ user, handleLogin, handleLogout }: HeaderProps)
     <header className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-accent via-brand-primary to-brand-secondary flex items-center justify-center">
-            <Target className="text-white w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+            <img src={Logo} alt="Caduceus Logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-xl font-bold tracking-tight">
             Caduceus <span className="gradient-text">CRM</span>
