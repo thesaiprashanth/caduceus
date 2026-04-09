@@ -1,43 +1,65 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Playfair Display", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-
-  --color-brand-primary: #E1306C; /* Instagram Pink */
-  --color-brand-secondary: #F77737; /* Instagram Orange */
-  --color-brand-accent: #833AB4; /* Instagram Purple */
 }
 
 @layer base {
   body {
-    @apply bg-[#050505] text-white antialiased selection:bg-brand-primary/30;
+    @apply bg-[#121212] text-white antialiased;
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a2a #121212;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: #121212;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #2a2a2a;
+    border-radius: 3px;
   }
 }
 
-.glass-card {
-  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+/* Custom checkbox style */
+.custom-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.gradient-text {
-  @apply bg-gradient-to-r from-brand-accent via-brand-primary to-brand-secondary bg-clip-text text-transparent;
+.custom-checkbox:hover {
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
-.gradient-border {
-  position: relative;
-  background: #050505;
-  background-clip: padding-box;
-  border: 1px solid transparent;
+.custom-checkbox:checked {
+  background: #3B82F6;
+  border-color: #3B82F6;
 }
 
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
-  z-index: -1;
-  margin: -1px;
-  border-radius: inherit;
-  background: linear-gradient(to right, #833AB4, #E1306C, #F77737);
+/* Recharts tooltip animation fix */
+.recharts-tooltip-wrapper {
+  transition: none !important;
+}
+
+/* Subtle row hover */
+.table-row-hover {
+  transition: background-color 0.15s ease;
+}
+.table-row-hover:hover {
+  background-color: rgba(255, 255, 255, 0.02);
 }
