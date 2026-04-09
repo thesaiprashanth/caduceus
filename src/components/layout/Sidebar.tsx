@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Search, Bot, Users, Building2, HelpCircle,
   Bell, Handshake, LogOut, Home, GitMerge, Zap,
-  BarChart3, Briefcase
+  BarChart3, Briefcase, Sparkles
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
@@ -13,27 +13,25 @@ const navGroups = [
   {
     label: 'MAIN',
     items: [
-      { icon: Home,       label: 'Home',          path: '/' },
-      { icon: BarChart3,  label: 'CRM Dashboard', path: '/crm-dashboard' },
-      { icon: GitMerge,   label: 'Lead Pipeline', path: '/lead-pipeline' },
-      { icon: Zap,        label: 'Automation',    path: '/automation' },
+      { icon: Home, label: 'Home', path: '/' },
+      { icon: BarChart3, label: 'CRM Dashboard', path: '/crm-dashboard' },
+      { icon: GitMerge, label: 'Lead Pipeline', path: '/lead-pipeline' },
+      { icon: Zap, label: 'Automation', path: '/automation' },
     ],
   },
   {
     label: 'OPERATIONS',
     items: [
-      { icon: Bot,       label: 'Agents',        path: '/agents' },
-      { icon: Users,     label: 'Conversations', path: '/chatbot' },
-      { icon: Handshake, label: 'Deals',         path: '/deals' },
-      { icon: Bell,      label: 'Notifications', path: '/notifications' },
+      { icon: Bot, label: 'Agents', path: '/agents' },
+      { icon: Users, label: 'Conversations', path: '/chatbot' },
+      { icon: Handshake, label: 'Deals', path: '/deals' },
+      { icon: Sparkles, label: 'Recommendations', path: '/notifications' },
     ],
   },
   {
     label: 'SYSTEM',
     items: [
-      { icon: Building2, label: 'CRM',        path: '/crm-dashboard' },
-      { icon: Briefcase, label: 'Enterprise', path: '/enterprise' },
-      { icon: HelpCircle,label: 'Help Center',path: '/help-center' },
+      { icon: HelpCircle, label: 'Help Center', path: '/help-center' },
     ],
   },
 ];
@@ -62,14 +60,6 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* Copilot CTA */}
-      <div className="px-3 mt-1">
-        <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-b from-amber-900/40 to-amber-950/30 ring-1 ring-amber-700/30 text-amber-100 text-sm font-medium shadow-inner">
-          <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
-          Ask Copilot
-        </button>
-      </div>
-
       {/* Nav groups */}
       <nav className="px-2 mt-4 flex-1 overflow-y-auto space-y-4">
         {navGroups.map((group) => (
@@ -84,11 +74,10 @@ export default function Sidebar() {
                   <Link
                     to={path}
                     key={label}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                      isActive
-                        ? 'bg-white/5 text-white'
-                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
-                    }`}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${isActive
+                      ? 'bg-white/5 text-white'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
+                      }`}
                   >
                     <Icon className="w-[16px] h-[16px] shrink-0" strokeWidth={1.75} />
                     <span className="flex-1 text-left">{label}</span>
@@ -99,14 +88,6 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Support */}
-      <div className="px-2 pb-2">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]">
-          <span className="w-4 h-4 rounded-full bg-amber-500/80 shrink-0" />
-          Support
-        </button>
-      </div>
 
       {/* User row */}
       <div className="border-t border-white/5 px-3 py-3 flex items-center gap-2.5">
