@@ -121,68 +121,75 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans text-white selection:bg-brand-primary/30 pb-20 relative">
-      {/* Chat Sidebar */}
-      <AnimatePresence>
-        {isChatOpen && data && (
-          <ChatSidebar 
-            data={data}
-            chatMessage={chatMessage}
-            setChatMessage={setChatMessage}
-            chatHistory={chatHistory}
-            isChatLoading={isChatLoading}
-            onClose={() => setIsChatOpen(false)}
-            onSendMessage={handleSendMessage}
-          />
-        )}
-      </AnimatePresence>
+    <Routes>
+      {/* CRM Dashboard — full-screen, no header/footer */}
+      <Route path="/crm-dashboard" element={<CRMDashboardPage />} />
 
-      {/* Floating Chat Button */}
-      {data && (
-        <FloatingChatButton onClick={() => setIsChatOpen(true)} />
-      )}
-
-      {/* Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-primary/10 blur-[120px] rounded-full" />
-      </div>
-
-      {/* Header */}
-      <Header user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
-
-      <main className="max-w-7xl mx-auto px-6 pt-12">
-        <Routes>
-          <Route path="/" element={
-            <>
-              <LandingPage 
-                handle={handle}
-                setHandle={setHandle}
-                isExtracting={isExtracting}
-                handleExtract={handleExtract}
-                hasData={!!data}
+      {/* All other routes with standard layout */}
+      <Route path="*" element={
+        <div className="min-h-screen font-sans text-white selection:bg-brand-primary/30 pb-20 relative">
+          {/* Chat Sidebar */}
+          <AnimatePresence>
+            {isChatOpen && data && (
+              <ChatSidebar 
+                data={data}
+                chatMessage={chatMessage}
+                setChatMessage={setChatMessage}
+                chatHistory={chatHistory}
+                isChatLoading={isChatLoading}
+                onClose={() => setIsChatOpen(false)}
+                onSendMessage={handleSendMessage}
               />
+            )}
+          </AnimatePresence>
 
-              <AnimatePresence mode="wait">
-                {data && (
-                  <DashboardPage 
-                    data={data}
-                    isAnalyzing={isAnalyzing}
-                    aiAnalysis={aiAnalysis}
+          {/* Floating Chat Button */}
+          {data && (
+            <FloatingChatButton onClick={() => setIsChatOpen(true)} />
+          )}
+
+          {/* Background Elements */}
+          <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/10 blur-[120px] rounded-full" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-primary/10 blur-[120px] rounded-full" />
+          </div>
+
+          {/* Header */}
+          <Header user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
+
+          <main className="max-w-7xl mx-auto px-6 pt-12">
+            <Routes>
+              <Route path="/" element={
+                <>
+                  <LandingPage 
+                    handle={handle}
+                    setHandle={setHandle}
+                    isExtracting={isExtracting}
+                    handleExtract={handleExtract}
+                    hasData={!!data}
                   />
-                )}
-              </AnimatePresence>
-            </>
-          } />
-          <Route path="/chatbot" element={<ChatbotPage />} />
-          <Route path="/crm-dashboard" element={<CRMDashboardPage />} />
-          <Route path="/lead-pipeline" element={<LeadPipelinePage />} />
-          <Route path="/automation" element={<AutomationPage />} />
-        </Routes>
-      </main>
 
-      {/* Footer */}
-      <Footer />
-    </div>
+                  <AnimatePresence mode="wait">
+                    {data && (
+                      <DashboardPage 
+                        data={data}
+                        isAnalyzing={isAnalyzing}
+                        aiAnalysis={aiAnalysis}
+                      />
+                    )}
+                  </AnimatePresence>
+                </>
+              } />
+              <Route path="/chatbot" element={<ChatbotPage />} />
+              <Route path="/lead-pipeline" element={<LeadPipelinePage />} />
+              <Route path="/automation" element={<AutomationPage />} />
+            </Routes>
+          </main>
+
+          {/* Footer */}
+          <Footer />
+        </div>
+      } />
+    </Routes>
   );
 }
