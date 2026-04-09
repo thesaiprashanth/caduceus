@@ -23,7 +23,8 @@ import {
   Briefcase,
   Mail,
   UserPlus,
-  Target
+  Target,
+  LogOut
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -40,6 +41,8 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { analyzeProfile, chatWithProfile } from './lib/gemini';
 import { cn } from './lib/utils';
+import { signInWithPopup, signOut, User } from 'firebase/auth';
+import { auth, googleProvider } from './lib/firebase';
 
 // Types
 interface ProfileData {
@@ -77,6 +80,30 @@ export default function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: string, parts: string }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Error signing in with Google", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out", error);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,6 +309,19 @@ export default function App() {
             <button className="px-5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
               Enterprise
             </button>
+            {user ? (
+              <div className="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
+                <img src={user.photoURL || ''} alt="User" className="w-8 h-8 rounded-full border border-white/20" referrerPolicy="no-referrer" />
+                <span className="text-sm font-semibold">{user.displayName?.split(' ')[0]}</span>
+                <button onClick={handleLogout} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-red-400" title="Sign out">
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black font-bold hover:bg-white/90 transition-all ml-4">
+                Sign in
+              </button>
+            )}
           </nav>
         </div>
       </header>
