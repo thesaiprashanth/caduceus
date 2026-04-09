@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -25,6 +26,7 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -106,6 +108,8 @@ export default function ChatPage() {
 
         .sidebar { width: 220px; border-right: 1px solid rgba(255,255,255,0.07); background: #0A0E16; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 12px 14px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .back-btn { display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin-bottom: 12px; font-size: 12px; font-weight: 500; color: #7C8BA8; cursor: pointer; transition: all 0.15s; border-radius: 5px; }
+        .back-btn:hover { background: rgba(255,255,255,0.05); color: #C5CDE3; }
         .new-chat-btn { width: 100%; padding: 7px 12px; font-size: 12px; font-weight: 500; color: #E8EEF8; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.04); display: flex; align-items: center; gap: 7px; transition: all 0.15s; }
         .new-chat-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
         .sidebar-section { padding: 10px 10px 4px; font-size: 10px; font-weight: 600; color: #4A5568; letter-spacing: 0.5px; text-transform: uppercase; }
@@ -177,6 +181,12 @@ export default function ChatPage() {
       <div className="chat-layout">
         <div className="sidebar">
           <div className="sidebar-header">
+            <div className="back-btn" onClick={() => navigate('/')}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10 12L6 8l4-4" />
+              </svg>
+              Home
+            </div>
             <button className="new-chat-btn">
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="8" y1="3" x2="8" y2="13" /><line x1="3" y1="8" x2="13" y2="8" />

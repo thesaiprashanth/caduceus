@@ -9,12 +9,12 @@ import { Link } from 'react-router-dom';
 
 const navItems = [
   { icon: Bot, label: 'Home', path: '/' },
-  { icon: Bot, label: 'Agents', path: '/' },
+  { icon: Bot, label: 'Agents', path: '/agents' },
   { icon: Users, label: 'Conversations', path: '/chatbot' },
-  { icon: Handshake, label: 'Deals', path: '/' },
-  { icon: Bell, label: 'Notifications', path: '/' },
+  { icon: Handshake, label: 'Deals', path: '/deals' },
+  { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Building2, label: 'CRM', path: '/crm-dashboard' },
-  { icon: HelpCircle, label: 'Help Center', path: '/' },
+  { icon: HelpCircle, label: 'Help Center', path: '/help-center' },
 ];
 
 export default function Sidebar() {
@@ -62,7 +62,7 @@ export default function Sidebar() {
         </button>
       </div>
       <div className="border-t border-white/5 px-3 py-3 flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-semibold text-zinc-200">K</div>
+        <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-semibold text-zinc-200">S</div>
         <span className="text-sm text-zinc-300">A D Suriya </span>
       </div>
     </aside>

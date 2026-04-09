@@ -15,6 +15,12 @@ import ChatbotPage from './pages/ChatbotPage';
 import CRMDashboardPage from './pages/CRMDashboardPage';
 import LeadPipelinePage from './pages/LeadPipelinePage';
 import AutomationPage from './pages/AutomationPage';
+
+import AgentsPage from './pages/Agents';
+import DealsPage from './pages/Deals';
+import NotificationPage from './pages/notification';
+import HelpCenterPage from './pages/helpcenter';
+
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 export default function App() {
@@ -188,6 +194,10 @@ export default function App() {
                   } />
                   <Route path="/lead-pipeline" element={<LeadPipelinePage />} />
                   <Route path="/automation" element={<AutomationPage />} />
+                  <Route path="/agents" element={<AgentsPage />} />
+                  <Route path="/deals" element={<DealsPage />} />
+                  <Route path="/notifications" element={<NotificationPage />} />
+                  <Route path="/help-center" element={<HelpCenterPage />} />
                 </Routes>
               </main>
 
