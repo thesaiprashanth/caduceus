@@ -119,7 +119,7 @@ export default function App() {
     setIsChatLoading(false);
   };
 
-  const handleExtract = async (e: React.FormEvent) => {
+  const handleExtract = async (e) => {
   e.preventDefault();
   if (!handle) return;
 
@@ -128,8 +128,6 @@ export default function App() {
   setAiAnalysis(null);
 
   try {
-    console.log("Calling /extract...");
-
     const response = await fetch("http://127.0.0.1:8000/extract", {
       method: "POST",
       headers: {
@@ -140,31 +138,74 @@ export default function App() {
       }),
     });
 
-    console.log("Received /extract response");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
     const profile = await response.json();
-    console.log(profile);
+    console.log("Profile data:", profile);
 
     setData({
       username: profile.username,
-      fullName: profile.full_name || profile.username,
-      bio: profile.bio || "",
-      followers: profile.followers || 0,
-      following: profile.following || 0,
-      posts: profile.posts?.length || 0,
-      engagementRate: 0,
-      avgLikes: 0,
-      avgComments: 0,
-      profilePic: profile.profile_pic,
-      recentPosts: [],
-      growthData: [],
+      fullName: profile.full_name,
+      bio: profile.bio,
+      followers: profile.followers,
+      following: profile.following,
+      posts: profile.posts_count,
+      engagementRate: profile.engagement_rate,
+      avgLikes: profile.avg_likes,
+      avgComments: profile.avg_comments,
+      profilePic: profile.profile_pic || `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff&size=200`,
+      recentPosts: profile.posts.map((post) => ({
+        id: post.id,
+        imageUrl: post.image_url || 'https://placehold.co/600x600/111827/ffffff?text=No+Image',
+        likes: post.likes,
+        comments: post.comments,
+        caption: post.caption,
+        date: "Recent",
+        engagement: post.engagement.toFixed(1),
+      })),
+      growthData: [
+        { date: "Mon", followers: profile.followers * 0.98 },
+        { date: "Tue", followers: profile.followers * 0.99 },
+        { date: "Wed", followers: profile.followers * 0.99 },
+        { date: "Thu", followers: profile.followers },
+        { date: "Fri", followers: profile.followers * 1.01 },
+        { date: "Sat", followers: profile.followers * 1.01 },
+        { date: "Sun", followers: profile.followers * 1.02 },
+      ],
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error extracting profile:", err);
+    alert("Failed to extract profile. Please try again.");
   } finally {
     setIsExtracting(false);
   }
+};
+// Add this helper function at the top of your App component
+const getImageUrl = (originalUrl) => {
+  if (!originalUrl) return null;
+  
+  if (originalUrl.includes('ui-avatars.com') || originalUrl.startsWith('data:')) {
+    return originalUrl;
+  }
+  
+  // Use a public CORS proxy (temporary solution)
+  const proxy = 'https://cors-anywhere.herokuapp.com/';
+  return `${proxy}${originalUrl}`;
+};
+
+// Image error handler
+// Add this helper function
+const handleImageError = (e) => {
+  if (e.currentTarget.src.includes('ui-avatars.com')) {
+    return; // Already using fallback
+  }
+  // Try to use avatar as fallback
+  const username = e.currentTarget.alt || 'user';
+  e.currentTarget.src = `https://ui-avatars.com/api/?name=${username}&background=111827&color=fff&size=200`;
+  e.currentTarget.onerror = null; // Prevent infinite loop
 };
 
   const handleAnalyze = async (profileData: ProfileData) => {
@@ -452,11 +493,10 @@ export default function App() {
               <div className="glass-card p-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-tr from-brand-accent to-brand-secondary rounded-full blur opacity-40"></div>
-                 <img
+  <img
   src={data.profilePic}
   alt={data.username}
   className="relative w-32 h-32 rounded-full border-4 border-[#050505] object-cover"
-  referrerPolicy="no-referrer"
   onError={(e) => {
     e.currentTarget.src = `https://ui-avatars.com/api/?name=${data.username}&background=111827&color=fff&size=200`;
   }}
@@ -633,12 +673,15 @@ export default function App() {
                       {data.recentPosts.map((post) => (
                         <div key={post.id} className="glass-card group overflow-hidden">
                           <div className="aspect-square relative overflow-hidden">
-                            <img 
-                              src={post.imageUrl} 
-                              alt="Post" 
-                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                              referrerPolicy="no-referrer"
-                            />
+                           <img
+  src={post.imageUrl || 'https://placehold.co/600x600/111827/ffffff?text=No+Image'}
+  alt="Post"
+  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+  onError={(e) => {
+    e.currentTarget.src = 'https://placehold.co/600x600/111827/ffffff?text=Image+Not+Available';
+    e.currentTarget.onerror = null;
+  }}
+/>
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-8">
                               <div className="flex flex-col items-center gap-1">
                                 <Heart className="w-6 h-6 text-white fill-white" />
