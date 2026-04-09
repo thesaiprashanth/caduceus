@@ -136,78 +136,108 @@ export default function App() {
     setIsChatLoading(false);
   };
 
-  const handleExtract = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!handle) return;
+ const handleExtract = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!handle) return;
 
-    setIsExtracting(true);
-    setData(null);
-    setAiAnalysis(null);
+  setIsExtracting(true);
+  setData(null);
+  setAiAnalysis(null);
 
-    try {
-      console.log("Calling /extract...");
-      const response = await fetch("http://127.0.0.1:8000/extract", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: handle.replace("@", ""),
-        }),
-      });
+  try {
+    console.log("Calling /extract...");
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+    const response = await fetch("http://127.0.0.1:8000/extract", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: handle.replace("@", ""),
+      }),
+    });
 
-      const profile = await response.json();
-      console.log("Profile data:", profile);
-
-      setData({
-        username: profile.username,
-        fullName: profile.full_name || profile.username,
-        bio: profile.bio || "",
-        followers: profile.followers || 0,
-        following: profile.following || 0,
-        posts: profile.posts_count || profile.posts?.length || 0,
-        engagementRate: profile.engagement_rate || 0,
-        avgLikes: profile.avg_likes || 0,
-        avgComments: profile.avg_comments || 0,
-        profilePic: profile.profile_pic || `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff&size=200`,
-        recentPosts: profile.posts ? profile.posts.map((post: any) => ({
-          id: post.id,
-          imageUrl: post.image_url || 'https://placehold.co/600x600/111827/ffffff?text=No+Image',
-          likes: post.likes,
-          comments: post.comments,
-          caption: post.caption,
-          date: "Recent",
-          engagement: post.engagement ? post.engagement.toFixed(1) : 0,
-        })) : [],
-        growthData: profile.followers ? [
-          { date: "Mon", followers: profile.followers * 0.98 },
-          { date: "Tue", followers: profile.followers * 0.99 },
-          { date: "Wed", followers: profile.followers * 0.99 },
-          { date: "Thu", followers: profile.followers },
-          { date: "Fri", followers: profile.followers * 1.01 },
-          { date: "Sat", followers: profile.followers * 1.01 },
-          { date: "Sun", followers: profile.followers * 1.02 },
-        ] : [],
-      });
-
-    } catch (err) {
-      console.error("Error extracting profile:", err);
-      alert("Failed to extract profile. Please try again.");
-    } finally {
-      setIsExtracting(false);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
 
-  const handleAnalyze = async (profileData: ProfileData) => {
+    const profile = await response.json();
+    console.log("Profile data:", profile);
+
+    const processedData: ProfileData = {
+      username: profile.username,
+      fullName: profile.full_name || profile.username,
+      bio: profile.bio || "",
+      followers: profile.followers || 0,
+      following: profile.following || 0,
+      posts: profile.posts_count || profile.posts?.length || 0,
+      engagementRate: profile.engagement_rate || 0,
+      avgLikes: profile.avg_likes || 0,
+      avgComments: profile.avg_comments || 0,
+      profilePic:
+        profile.profile_pic ||
+        `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff&size=200`,
+
+      recentPosts: profile.posts
+        ? profile.posts.map((post: any) => ({
+            id: post.id,
+            imageUrl:
+              post.image_url ||
+              "https://placehold.co/600x600/111827/ffffff?text=No+Image",
+            likes: post.likes,
+            comments: post.comments,
+            caption: post.caption,
+            date: "Recent",
+            engagement: post.engagement
+              ? Number(post.engagement).toFixed(1)
+              : "0.0",
+          }))
+        : [],
+
+      growthData: profile.followers
+        ? [
+            { date: "Mon", followers: profile.followers * 0.98 },
+            { date: "Tue", followers: profile.followers * 0.99 },
+            { date: "Wed", followers: profile.followers * 0.99 },
+            { date: "Thu", followers: profile.followers },
+            { date: "Fri", followers: profile.followers * 1.01 },
+            { date: "Sat", followers: profile.followers * 1.01 },
+            { date: "Sun", followers: profile.followers * 1.02 },
+          ]
+        : [],
+    };
+
+    setData(processedData);
+
+    console.log("Calling AI analysis...");
+    await handleAnalyze(processedData);
+
+  } catch (err) {
+    console.error("Error extracting profile:", err);
+    alert("Failed to extract profile. Please try again.");
+  } finally {
+    setIsExtracting(false);
+  }
+};
+
+const handleAnalyze = async (profileData: ProfileData) => {
+  try {
     setIsAnalyzing(true);
+
+    console.log("Sending to AI:", profileData);
+
     const analysis = await analyzeProfile(profileData);
-    setAiAnalysis(analysis);
+
+    console.log("AI returned:", analysis);
+
+    setAiAnalysis(analysis || "No analysis returned.");
+  } catch (err) {
+    console.error("AI analysis failed:", err);
+    setAiAnalysis("Failed to generate AI analysis.");
+  } finally {
     setIsAnalyzing(false);
-  };
+  }
+};
 
   if (authLoading) return null;
 
