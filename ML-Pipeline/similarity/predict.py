@@ -1,9 +1,12 @@
 import json
+from pathlib import Path
+
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from embed import get_embedding
+from .embed import get_embedding
 
-with open("saved_profiles.json", "r") as f:
+BASE_DIR = Path(__file__).resolve().parent
+with open(BASE_DIR / "saved_profiles.json", "r", encoding="utf-8") as f:
     profiles = json.load(f)
 
 def find_similar_businesses(text):

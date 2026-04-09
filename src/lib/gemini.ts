@@ -1,6 +1,29 @@
-import { GoogleGenAI } from "@google/genai";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+type ChatMessage = {
+  role: string;
+  content: string;
+};
+
+const fetchChatbotReply = async (payload: {
+  message: string;
+  mode?: string | null;
+  history?: ChatMessage[];
+}) => {
+  const response = await fetch(`${API_BASE_URL}/chatbot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Chatbot API request failed.");
+  }
+
+  const data: { reply?: string } = await response.json();
+  return data.reply || "";
+};
 
 export const analyzeProfile = async (profileData: any) => {
   const prompt = `
@@ -25,11 +48,11 @@ export const analyzeProfile = async (profileData: any) => {
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+    return await fetchChatbotReply({
+      message: prompt,
+      mode: "think",
+      history: [],
     });
-    return response.text;
   } catch (error) {
     console.error("Gemini Analysis Error:", error);
     return "Failed to generate AI analysis. Please try again.";
@@ -48,16 +71,20 @@ export const chatWithProfile = async (profileData: any, message: string, history
     Be concise, professional, and actionable.
   `;
 
+  const mappedHistory: ChatMessage[] = [
+    { role: "user", content: context },
+    ...history.map((h) => ({
+      role: h.role === "model" ? "model" : "user",
+      content: h.parts,
+    })),
+  ];
+
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: [
-        { role: "user", parts: [{ text: context }] },
-        ...history.map(h => ({ role: h.role, parts: [{ text: h.parts }] })),
-        { role: "user", parts: [{ text: message }] }
-      ],
+    return await fetchChatbotReply({
+      message,
+      mode: null,
+      history: mappedHistory,
     });
-    return response.text;
   } catch (error) {
     console.error("Gemini Chat Error:", error);
     return "I'm sorry, I encountered an error while processing your request.";
