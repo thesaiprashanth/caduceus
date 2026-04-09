@@ -4,9 +4,9 @@ import { analyzeProfile, chatWithProfile } from './lib/gemini';
 import { signInWithPopup, signOut, User } from 'firebase/auth';
 import { auth, googleProvider } from './lib/firebase';
 import { ProfileData, Post } from './types';
-
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import Sidebar from './components/layout/Sidebar';
 import ChatSidebar from './components/chat/ChatSidebar';
 import FloatingChatButton from './components/chat/FloatingChatButton';
 import LandingPage from './pages/LandingPage';
@@ -15,7 +15,7 @@ import ChatbotPage from './pages/ChatbotPage';
 import CRMDashboardPage from './pages/CRMDashboardPage';
 import LeadPipelinePage from './pages/LeadPipelinePage';
 import AutomationPage from './pages/AutomationPage';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 export default function App() {
   const [handle, setHandle] = useState('');
@@ -28,6 +28,8 @@ export default function App() {
   const [chatHistory, setChatHistory] = useState<{ role: string, parts: string }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -81,7 +83,7 @@ export default function App() {
     const mockData: ProfileData = {
       username: handle.replace('@', ''),
       fullName: "Premium Brand Co.",
-      bio: "Elevating lifestyle through design and innovation. \uD83C\uDF3F | Est. 2020 | Worldwide Shipping \uD83D\uDCE6",
+      bio: "Elevating lifestyle through design and innovation. 🌿 | Est. 2020 | Worldwide Shipping 📦",
       followers: 125400,
       following: 842,
       posts: 432,
@@ -90,10 +92,10 @@ export default function App() {
       avgComments: 124,
       profilePic: `https://picsum.photos/seed/${handle}/200/200`,
       recentPosts: [
-        { id: '1', imageUrl: 'https://picsum.photos/seed/post1/400/400', likes: 6200, comments: 145, caption: "New collection dropping tomorrow! \u2728 #lifestyle #design", date: "2h ago", engagement: 5.1 },
-        { id: '2', imageUrl: 'https://picsum.photos/seed/post2/400/400', likes: 4100, comments: 89, caption: "Morning routines that matter. \u2615\uFE0F", date: "1d ago", engagement: 3.4 },
-        { id: '3', imageUrl: 'https://picsum.photos/seed/post3/400/400', likes: 8900, comments: 312, caption: "Our best-seller is back in stock! Limited quantities. \uD83C\uDFC3\u200D\u2642\uFE0F", date: "3d ago", engagement: 7.2 },
-        { id: '4', imageUrl: 'https://picsum.photos/seed/post4/400/400', likes: 5400, comments: 92, caption: "Behind the scenes at our studio. \uD83C\uDFA8", date: "5d ago", engagement: 4.5 },
+        { id: '1', imageUrl: 'https://picsum.photos/seed/post1/400/400', likes: 6200, comments: 145, caption: "New collection dropping tomorrow! ✨ #lifestyle #design", date: "2h ago", engagement: 5.1 },
+        { id: '2', imageUrl: 'https://picsum.photos/seed/post2/400/400', likes: 4100, comments: 89, caption: "Morning routines that matter. ☕️", date: "1d ago", engagement: 3.4 },
+        { id: '3', imageUrl: 'https://picsum.photos/seed/post3/400/400', likes: 8900, comments: 312, caption: "Our best-seller is back in stock! Limited quantities. 🏃‍♂️", date: "3d ago", engagement: 7.2 },
+        { id: '4', imageUrl: 'https://picsum.photos/seed/post4/400/400', likes: 5400, comments: 92, caption: "Behind the scenes at our studio. 🎨", date: "5d ago", engagement: 4.5 },
       ],
       growthData: [
         { date: 'Mon', followers: 124100 },
@@ -108,7 +110,7 @@ export default function App() {
 
     setData(mockData);
     setIsExtracting(false);
-    
+
     // Auto-trigger AI Analysis
     handleAnalyze(mockData);
   };
@@ -121,75 +123,80 @@ export default function App() {
   };
 
   return (
-    <Routes>
-      {/* CRM Dashboard — full-screen, no header/footer */}
-      <Route path="/crm-dashboard" element={<CRMDashboardPage />} />
+    <div className="flex min-h-screen font-sans text-white bg-black selection:bg-brand-primary/30 relative">
+      {location.pathname !== '/chatbot' && <Sidebar />}
+      <div className="flex-1 min-w-0">
+        <Routes>
+          {/* CRM Dashboard & Chatbot — full-screen, no header/footer/container */}
+          <Route path="/crm-dashboard" element={<CRMDashboardPage />} />
+          <Route path="/chatbot" element={<ChatbotPage />} />
 
-      {/* All other routes with standard layout */}
-      <Route path="*" element={
-        <div className="min-h-screen font-sans text-white selection:bg-brand-primary/30 pb-20 relative">
-          {/* Chat Sidebar */}
-          <AnimatePresence>
-            {isChatOpen && data && (
-              <ChatSidebar 
-                data={data}
-                chatMessage={chatMessage}
-                setChatMessage={setChatMessage}
-                chatHistory={chatHistory}
-                isChatLoading={isChatLoading}
-                onClose={() => setIsChatOpen(false)}
-                onSendMessage={handleSendMessage}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Floating Chat Button */}
-          {data && (
-            <FloatingChatButton onClick={() => setIsChatOpen(true)} />
-          )}
-
-          {/* Background Elements */}
-          <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/10 blur-[120px] rounded-full" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-primary/10 blur-[120px] rounded-full" />
-          </div>
-
-          {/* Header */}
-          <Header user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
-
-          <main className="max-w-7xl mx-auto px-6 pt-12">
-            <Routes>
-              <Route path="/" element={
-                <>
-                  <LandingPage 
-                    handle={handle}
-                    setHandle={setHandle}
-                    isExtracting={isExtracting}
-                    handleExtract={handleExtract}
-                    hasData={!!data}
+          {/* All other routes with standard layout */}
+          <Route path="*" element={
+            <div className="min-h-screen pb-20 relative">
+              {/* Chat Sidebar */}
+              <AnimatePresence>
+                {isChatOpen && data && (
+                  <ChatSidebar
+                    data={data}
+                    chatMessage={chatMessage}
+                    setChatMessage={setChatMessage}
+                    chatHistory={chatHistory}
+                    isChatLoading={isChatLoading}
+                    onClose={() => setIsChatOpen(false)}
+                    onSendMessage={handleSendMessage}
                   />
+                )}
+              </AnimatePresence>
 
-                  <AnimatePresence mode="wait">
-                    {data && (
-                      <DashboardPage 
-                        data={data}
-                        isAnalyzing={isAnalyzing}
-                        aiAnalysis={aiAnalysis}
+              {/* Floating Chat Button */}
+              {data && (
+                <FloatingChatButton onClick={() => setIsChatOpen(true)} />
+              )}
+
+              {/* Background Elements */}
+              <div className="fixed inset-0 overflow-hidden pointer-events-none z-[-1]">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-accent/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-brand-primary/10 blur-[120px] rounded-full" />
+              </div>
+
+              {/* Header */}
+              <Header user={user} handleLogin={handleLogin} handleLogout={handleLogout} />
+
+              <main className="max-w-7xl mx-auto px-6 pt-12">
+                <Routes>
+                  <Route path="/" element={
+                    <>
+                      <LandingPage
+                        handle={handle}
+                        setHandle={setHandle}
+                        isExtracting={isExtracting}
+                        handleExtract={handleExtract}
+                        hasData={!!data}
                       />
-                    )}
-                  </AnimatePresence>
-                </>
-              } />
-              <Route path="/chatbot" element={<ChatbotPage />} />
-              <Route path="/lead-pipeline" element={<LeadPipelinePage />} />
-              <Route path="/automation" element={<AutomationPage />} />
-            </Routes>
-          </main>
 
-          {/* Footer */}
-          <Footer />
-        </div>
-      } />
-    </Routes>
+                      <AnimatePresence mode="wait">
+                        {data && (
+                          <DashboardPage
+                            data={data}
+                            isAnalyzing={isAnalyzing}
+                            aiAnalysis={aiAnalysis}
+                          />
+                        )}
+                      </AnimatePresence>
+                    </>
+                  } />
+                  <Route path="/lead-pipeline" element={<LeadPipelinePage />} />
+                  <Route path="/automation" element={<AutomationPage />} />
+                </Routes>
+              </main>
+
+              {/* Footer */}
+              <Footer />
+            </div>
+          } />
+        </Routes>
+      </div>
+    </div>
   );
 }

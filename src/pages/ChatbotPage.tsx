@@ -174,19 +174,6 @@ export default function ChatPage() {
         .disclaimer { text-align: center; margin-top: 6px; font-size: 10px; color: #2E3748; }
       `}</style>
 
-      <div className="topbar">
-        <div className="topbar-brand">
-          <div className="brand-icon"><SparkleIcon /></div>
-          <span className="brand-name">Caduceus CRM</span>
-        </div>
-        <div className="topbar-nav">
-          {["Chatbot", "CRM Dashboard", "Lead Pipeline", "Automation", "Enterprise"].map((item) => (
-            <div key={item} className={`nav-item ${item === "Chatbot" ? "active" : ""}`}>{item}</div>
-          ))}
-        </div>
-        <div className="sign-in-btn">Sign in</div>
-      </div>
-
       <div className="chat-layout">
         <div className="sidebar">
           <div className="sidebar-header">

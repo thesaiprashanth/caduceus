@@ -16,11 +16,11 @@ const chartData = Array.from({ length: 30 }, (_, i) => {
 });
 
 const clients = [
-  { name: 'Mulders Tech', phase: 'Qualified', phaseColor: 'bg-fuchsia-500/15 text-fuchsia-300 ring-fuchsia-500/30', deals: 3, value: '€145,000', owner: 'Fleur Zethoven', ownerColor: 'bg-rose-500', activity: 'Email sent', date: 'Jul 25, 2025, 2:35 PM', dot: 'from-sky-400 to-blue-600' },
-  { name: 'Acme Corp', phase: 'Closed', phaseColor: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30', deals: 2, value: '€82,000', owner: 'Oliver Bennett', ownerColor: 'bg-amber-500', activity: 'Call completed', date: 'Jul 23, 2025, 9:50 AM', dot: 'from-zinc-300 to-zinc-500' },
-  { name: 'Kinetic Labs', phase: 'Negotiation', phaseColor: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30', deals: 5, value: '€96,500', owner: 'Ethan Wright', ownerColor: 'bg-pink-500', activity: 'Task created', date: 'Jul 20, 2025, 4:22 PM', dot: 'from-purple-400 to-fuchsia-600' },
-  { name: 'Nordlane', phase: 'Proposal', phaseColor: 'bg-blue-500/15 text-blue-300 ring-blue-500/30', deals: 7, value: '€31,000', owner: 'Leo Patel', ownerColor: 'bg-orange-500', activity: 'Note added', date: 'Jul 18, 2025, 10:45 AM', dot: 'from-orange-400 to-red-500' },
-  { name: 'Orion Systems', phase: 'Lead', phaseColor: 'bg-orange-500/15 text-orange-300 ring-orange-500/30', deals: 7, value: '€31,000', owner: 'Alistair Crowley', ownerColor: 'bg-violet-500', activity: 'Deal closed', date: 'Jul 18, 2025, 10:45 AM', dot: 'from-cyan-400 to-teal-500' },
+  { name: 'Mulders Tech', phase: 'Qualified', phaseColor: 'bg-fuchsia-500/15 text-fuchsia-300 ring-fuchsia-500/30', deals: 3, value: '₹145,000', owner: 'Fleur Zethoven', ownerColor: 'bg-rose-500', activity: 'Email sent', date: 'Jul 25, 2025, 2:35 PM', dot: 'from-sky-400 to-blue-600' },
+  { name: 'Acme Corp', phase: 'Closed', phaseColor: 'bg-zinc-500/15 text-zinc-300 ring-zinc-500/30', deals: 2, value: '₹82,000', owner: 'Oliver Bennett', ownerColor: 'bg-amber-500', activity: 'Call completed', date: 'Jul 23, 2025, 9:50 AM', dot: 'from-zinc-300 to-zinc-500' },
+  { name: 'Kinetic Labs', phase: 'Negotiation', phaseColor: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30', deals: 5, value: '₹96,500', owner: 'Ethan Wright', ownerColor: 'bg-pink-500', activity: 'Task created', date: 'Jul 20, 2025, 4:22 PM', dot: 'from-purple-400 to-fuchsia-600' },
+  { name: 'Nordlane', phase: 'Proposal', phaseColor: 'bg-blue-500/15 text-blue-300 ring-blue-500/30', deals: 7, value: '₹31,000', owner: 'Leo Patel', ownerColor: 'bg-orange-500', activity: 'Note added', date: 'Jul 18, 2025, 10:45 AM', dot: 'from-orange-400 to-red-500' },
+  { name: 'Orion Systems', phase: 'Lead', phaseColor: 'bg-orange-500/15 text-orange-300 ring-orange-500/30', deals: 7, value: '₹31,000', owner: 'Alistair Crowley', ownerColor: 'bg-violet-500', activity: 'Deal closed', date: 'Jul 18, 2025, 10:45 AM', dot: 'from-cyan-400 to-teal-500' },
 ];
 
 function CustomTooltip({ active, payload, label }) {
@@ -89,7 +89,7 @@ export default function CRMDashboardPage() {
           <div className="flex gap-10">
             <div className="shrink-0">
               <div className="text-sm text-zinc-500">Total revenue</div>
-              <div className="text-[28px] font-semibold text-white tracking-tight mt-1">€182,500</div>
+              <div className="text-[28px] font-semibold text-white tracking-tight mt-1">₹182,500</div>
               <div className="text-sm text-zinc-500 mt-5">Total deals</div>
               <div className="text-[28px] font-semibold text-white tracking-tight mt-1">18</div>
 
