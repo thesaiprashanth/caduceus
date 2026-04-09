@@ -5,15 +5,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Search, 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Instagram, 
-  Sparkles, 
-  ArrowRight, 
-  Loader2, 
+import {
+  Search,
+  BarChart3,
+  TrendingUp,
+  Users,
+  Instagram,
+  Sparkles,
+  ArrowRight,
+  Loader2,
   Calendar,
   MessageSquare,
   Heart,
@@ -26,13 +26,13 @@ import {
   Target,
   LogOut
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -43,6 +43,8 @@ import { analyzeProfile, chatWithProfile } from './lib/gemini';
 import { cn } from './lib/utils';
 import { signInWithPopup, signOut, User } from 'firebase/auth';
 import { auth, googleProvider } from './lib/firebase';
+import { useNavigate } from 'react-router-dom';
+import logo from "./Assets/Logo.jpeg";
 
 // Types
 interface ProfileData {
@@ -70,6 +72,26 @@ interface Post {
   engagement: number;
 }
 
+// Helpers
+const getImageUrl = (originalUrl: string | null) => {
+  if (!originalUrl) return null;
+  if (originalUrl.includes('ui-avatars.com') || originalUrl.startsWith('data:')) {
+    return originalUrl;
+  }
+  // Use a public CORS proxy (temporary solution)
+  const proxy = 'https://cors-anywhere.herokuapp.com/';
+  return `${proxy}${originalUrl}`;
+};
+
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  if (e.currentTarget.src.includes('ui-avatars.com')) {
+    return; // Already using fallback
+  }
+  const username = e.currentTarget.alt || 'user';
+  e.currentTarget.src = `https://ui-avatars.com/api/?name=${username}&background=111827&color=fff&size=200`;
+  e.currentTarget.onerror = null; // Prevent infinite loop
+};
+
 export default function App() {
   const [handle, setHandle] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
@@ -80,14 +102,18 @@ export default function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: string, parts: string }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleLogin = async () => {
     try {
@@ -119,94 +145,71 @@ export default function App() {
     setIsChatLoading(false);
   };
 
-  const handleExtract = async (e) => {
-  e.preventDefault();
-  if (!handle) return;
+  const handleExtract = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!handle) return;
 
-  setIsExtracting(true);
-  setData(null);
-  setAiAnalysis(null);
+    setIsExtracting(true);
+    setData(null);
+    setAiAnalysis(null);
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/extract", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: handle.replace("@", ""),
-      }),
-    });
+    try {
+      console.log("Calling /extract...");
+      const response = await fetch("http://127.0.0.1:8000/extract", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: handle.replace("@", ""),
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const profile = await response.json();
+      console.log("Profile data:", profile);
+
+      setData({
+        username: profile.username,
+        fullName: profile.full_name || profile.username,
+        bio: profile.bio || "",
+        followers: profile.followers || 0,
+        following: profile.following || 0,
+        posts: profile.posts_count || profile.posts?.length || 0,
+        engagementRate: profile.engagement_rate || 0,
+        avgLikes: profile.avg_likes || 0,
+        avgComments: profile.avg_comments || 0,
+        profilePic: profile.profile_pic || `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff&size=200`,
+        recentPosts: profile.posts ? profile.posts.map((post: any) => ({
+          id: post.id,
+          imageUrl: post.image_url || 'https://placehold.co/600x600/111827/ffffff?text=No+Image',
+          likes: post.likes,
+          comments: post.comments,
+          caption: post.caption,
+          date: "Recent",
+          engagement: post.engagement ? post.engagement.toFixed(1) : 0,
+        })) : [],
+        growthData: profile.followers ? [
+          { date: "Mon", followers: profile.followers * 0.98 },
+          { date: "Tue", followers: profile.followers * 0.99 },
+          { date: "Wed", followers: profile.followers * 0.99 },
+          { date: "Thu", followers: profile.followers },
+          { date: "Fri", followers: profile.followers * 1.01 },
+          { date: "Sat", followers: profile.followers * 1.01 },
+          { date: "Sun", followers: profile.followers * 1.02 },
+        ] : [],
+      });
+
+    } catch (err) {
+      console.error("Error extracting profile:", err);
+      alert("Failed to extract profile. Please try again.");
+    } finally {
+      setIsExtracting(false);
     }
-
-    const profile = await response.json();
-    console.log("Profile data:", profile);
-
-    setData({
-      username: profile.username,
-      fullName: profile.full_name,
-      bio: profile.bio,
-      followers: profile.followers,
-      following: profile.following,
-      posts: profile.posts_count,
-      engagementRate: profile.engagement_rate,
-      avgLikes: profile.avg_likes,
-      avgComments: profile.avg_comments,
-      profilePic: profile.profile_pic || `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff&size=200`,
-      recentPosts: profile.posts.map((post) => ({
-        id: post.id,
-        imageUrl: post.image_url || 'https://placehold.co/600x600/111827/ffffff?text=No+Image',
-        likes: post.likes,
-        comments: post.comments,
-        caption: post.caption,
-        date: "Recent",
-        engagement: post.engagement.toFixed(1),
-      })),
-      growthData: [
-        { date: "Mon", followers: profile.followers * 0.98 },
-        { date: "Tue", followers: profile.followers * 0.99 },
-        { date: "Wed", followers: profile.followers * 0.99 },
-        { date: "Thu", followers: profile.followers },
-        { date: "Fri", followers: profile.followers * 1.01 },
-        { date: "Sat", followers: profile.followers * 1.01 },
-        { date: "Sun", followers: profile.followers * 1.02 },
-      ],
-    });
-
-  } catch (err) {
-    console.error("Error extracting profile:", err);
-    alert("Failed to extract profile. Please try again.");
-  } finally {
-    setIsExtracting(false);
-  }
-};
-// Add this helper function at the top of your App component
-const getImageUrl = (originalUrl) => {
-  if (!originalUrl) return null;
-  
-  if (originalUrl.includes('ui-avatars.com') || originalUrl.startsWith('data:')) {
-    return originalUrl;
-  }
-  
-  // Use a public CORS proxy (temporary solution)
-  const proxy = 'https://cors-anywhere.herokuapp.com/';
-  return `${proxy}${originalUrl}`;
-};
-
-// Image error handler
-// Add this helper function
-const handleImageError = (e) => {
-  if (e.currentTarget.src.includes('ui-avatars.com')) {
-    return; // Already using fallback
-  }
-  // Try to use avatar as fallback
-  const username = e.currentTarget.alt || 'user';
-  e.currentTarget.src = `https://ui-avatars.com/api/?name=${username}&background=111827&color=fff&size=200`;
-  e.currentTarget.onerror = null; // Prevent infinite loop
-};
+  };
 
   const handleAnalyze = async (profileData: ProfileData) => {
     setIsAnalyzing(true);
@@ -215,20 +218,22 @@ const handleImageError = (e) => {
     setIsAnalyzing(false);
   };
 
+  if (authLoading) return null;
+
   return (
     <div className="min-h-screen font-sans text-white selection:bg-brand-primary/30 pb-20">
       {/* Chat Sidebar */}
       <AnimatePresence>
         {isChatOpen && data && (
           <>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsChatOpen(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
             />
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -245,7 +250,7 @@ const handleImageError = (e) => {
                     <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">CRM Assistant</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsChatOpen(false)}
                   className="p-2 hover:bg-white/5 rounded-full transition-colors"
                 >
@@ -269,8 +274,8 @@ const handleImageError = (e) => {
                   )}>
                     <div className={cn(
                       "p-4 rounded-2xl text-sm leading-relaxed",
-                      msg.role === 'user' 
-                        ? "bg-brand-primary text-white rounded-tr-none" 
+                      msg.role === 'user'
+                        ? "bg-brand-primary text-white rounded-tr-none"
                         : "bg-white/5 border border-white/10 text-white/80 rounded-tl-none"
                     )}>
                       <ReactMarkdown>{msg.parts}</ReactMarkdown>
@@ -291,14 +296,14 @@ const handleImageError = (e) => {
 
               <form onSubmit={handleSendMessage} className="p-6 border-t border-white/10 bg-white/5">
                 <div className="relative flex items-center">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Type your question..."
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
                     className="w-full bg-[#050505] border border-white/10 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-brand-primary outline-none transition-all pr-12"
                   />
-                  <button 
+                  <button
                     type="submit"
                     disabled={!chatMessage || isChatLoading}
                     className="absolute right-2 p-2 text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-all disabled:opacity-0"
@@ -337,8 +342,8 @@ const handleImageError = (e) => {
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-accent via-brand-primary to-brand-secondary flex items-center justify-center">
-              <Target className="text-white w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
+              <img src={logo} alt="Caduceus Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-bold tracking-tight">
               Caduceus <span className="gradient-text">CRM</span>
@@ -351,7 +356,7 @@ const handleImageError = (e) => {
             <button className="px-5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
               Enterprise
             </button>
-            {user ? (
+            {user && (
               <div className="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
                 <img src={user.photoURL || ''} alt="User" className="w-8 h-8 rounded-full border border-white/20" referrerPolicy="no-referrer" />
                 <span className="text-sm font-semibold">{user.displayName?.split(' ')[0]}</span>
@@ -359,10 +364,6 @@ const handleImageError = (e) => {
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <button onClick={handleLogin} className="flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black font-bold hover:bg-white/90 transition-all ml-4">
-                Sign in
-              </button>
             )}
           </nav>
         </div>
@@ -371,7 +372,7 @@ const handleImageError = (e) => {
       <main className="max-w-7xl mx-auto px-6 pt-12">
         {/* Hero Search */}
         <section className="mb-16 text-center">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-bold tracking-tighter mb-6"
@@ -379,7 +380,7 @@ const handleImageError = (e) => {
             The AI-First CRM for <br />
             <span className="gradient-text italic font-serif">Instagram Business</span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -388,7 +389,7 @@ const handleImageError = (e) => {
             Convert followers into customers. Caduceus uses Gemini AI to extract leads, analyze relationship quality, and automate your outreach strategy.
           </motion.p>
 
-          <motion.form 
+          <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -400,14 +401,14 @@ const handleImageError = (e) => {
               <div className="pl-4 text-white/40">
                 <Search className="w-5 h-5" />
               </div>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Enter Instagram handle (e.g. @nike)"
                 value={handle}
                 onChange={(e) => setHandle(e.target.value)}
                 className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-lg outline-none"
               />
-              <button 
+              <button
                 disabled={isExtracting}
                 className="bg-white text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50"
               >
@@ -420,7 +421,7 @@ const handleImageError = (e) => {
 
         <AnimatePresence mode="wait">
           {isExtracting && (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -433,7 +434,7 @@ const handleImageError = (e) => {
                   <Loader2 className="w-10 h-10 text-white animate-spin" />
                 </div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -446,7 +447,7 @@ const handleImageError = (e) => {
           )}
 
           {data ? (
-            <motion.div 
+            <motion.div
               key="dashboard"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -493,14 +494,13 @@ const handleImageError = (e) => {
               <div className="glass-card p-8 flex flex-col md:flex-row gap-8 items-center md:items-start">
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-tr from-brand-accent to-brand-secondary rounded-full blur opacity-40"></div>
-  <img
-  src={data.profilePic}
-  alt={data.username}
-  className="relative w-32 h-32 rounded-full border-4 border-[#050505] object-cover"
-  onError={(e) => {
-    e.currentTarget.src = `https://ui-avatars.com/api/?name=${data.username}&background=111827&color=fff&size=200`;
-  }}
-/>
+                  <img
+                    src={data.profilePic}
+                    alt={data.username}
+                    className="relative w-32 h-32 rounded-full border-4 border-[#050505] object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={handleImageError}
+                  />
                 </div>
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
@@ -558,33 +558,33 @@ const handleImageError = (e) => {
                       <AreaChart data={data.growthData}>
                         <defs>
                           <linearGradient id="colorFollowers" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#E1306C" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#E1306C" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="#E1306C" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#E1306C" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#ffffff40" 
-                          fontSize={12} 
-                          tickLine={false} 
-                          axisLine={false} 
+                        <XAxis
+                          dataKey="date"
+                          stroke="#ffffff40"
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
                         />
-                        <YAxis 
-                          hide 
-                          domain={['dataMin - 100', 'dataMax + 100']} 
+                        <YAxis
+                          hide
+                          domain={['dataMin - 100', 'dataMax + 100']}
                         />
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #ffffff10', borderRadius: '12px' }}
                           itemStyle={{ color: '#E1306C' }}
                         />
-                        <Area 
-                          type="monotone" 
-                          dataKey="followers" 
-                          stroke="#E1306C" 
+                        <Area
+                          type="monotone"
+                          dataKey="followers"
+                          stroke="#E1306C"
                           strokeWidth={3}
-                          fillOpacity={1} 
-                          fill="url(#colorFollowers)" 
+                          fillOpacity={1}
+                          fill="url(#colorFollowers)"
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -673,15 +673,16 @@ const handleImageError = (e) => {
                       {data.recentPosts.map((post) => (
                         <div key={post.id} className="glass-card group overflow-hidden">
                           <div className="aspect-square relative overflow-hidden">
-                           <img
-  src={post.imageUrl || 'https://placehold.co/600x600/111827/ffffff?text=No+Image'}
-  alt="Post"
-  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-  onError={(e) => {
-    e.currentTarget.src = 'https://placehold.co/600x600/111827/ffffff?text=Image+Not+Available';
-    e.currentTarget.onerror = null;
-  }}
-/>
+                            <img
+                              src={post.imageUrl || 'https://placehold.co/600x600/111827/ffffff?text=No+Image'}
+                              alt="Post"
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                e.currentTarget.src = 'https://placehold.co/600x600/111827/ffffff?text=Image+Not+Available';
+                                e.currentTarget.onerror = null;
+                              }}
+                            />
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-8">
                               <div className="flex flex-col items-center gap-1">
                                 <Heart className="w-6 h-6 text-white fill-white" />
@@ -752,7 +753,7 @@ const handleImageError = (e) => {
                     <div className="grid grid-cols-7 gap-1 h-32 items-end">
                       {[40, 60, 80, 100, 70, 50, 30].map((h, i) => (
                         <div key={i} className="flex flex-col items-center gap-2">
-                          <div 
+                          <div
                             className="w-full bg-brand-primary/40 rounded-t-sm hover:bg-brand-primary transition-colors cursor-help"
                             style={{ height: `${h}%` }}
                             title={`Engagement: ${h}%`}
@@ -784,7 +785,7 @@ const handleImageError = (e) => {
             </motion.div>
           ) : (
             !isExtracting && (
-              <motion.div 
+              <motion.div
                 key="empty"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -805,7 +806,7 @@ const handleImageError = (e) => {
       <footer className="mt-20 border-t border-white/5 py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3 opacity-50">
-            <Target className="w-5 h-5" />
+            <img src={logo} alt="Caduceus Logo" className="w-5 h-5 object-cover rounded" />
             <span className="text-sm font-bold tracking-tight">Caduceus CRM</span>
           </div>
           <p className="text-white/20 text-xs font-medium">
