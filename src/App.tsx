@@ -23,8 +23,7 @@ import {
   Briefcase,
   Mail,
   UserPlus,
-  Target,
-  LogOut
+  Target
 } from 'lucide-react';
 import {
   AreaChart,
@@ -41,7 +40,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import { analyzeProfile, chatWithProfile } from './lib/gemini';
 import { cn } from './lib/utils';
-import { signInWithPopup, signOut, User } from 'firebase/auth';
+import { signInWithPopup, User } from 'firebase/auth';
 import { auth, googleProvider } from './lib/firebase';
 import { useNavigate } from 'react-router-dom';
 import logo from "./Assets/Logo.jpeg";
@@ -120,14 +119,6 @@ export default function App() {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error signing in with Google", error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out", error);
     }
   };
 
@@ -340,32 +331,13 @@ export default function App() {
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center">
-              <img src={logo} alt="Caduceus Logo" className="w-full h-full object-cover" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              Caduceus <span className="gradient-text">CRM</span>
-            </span>
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+            <img src={logo} alt="Caduceus Logo" className="w-full h-full object-cover" />
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
-            <a href="#" className="hover:text-white transition-colors">CRM Dashboard</a>
-            <a href="#" className="hover:text-white transition-colors">Lead Pipeline</a>
-            <a href="#" className="hover:text-white transition-colors">Automation</a>
-            <button className="px-5 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-              Enterprise
-            </button>
-            {user && (
-              <div className="flex items-center gap-3 ml-4 border-l border-white/10 pl-4">
-                <img src={user.photoURL || ''} alt="User" className="w-8 h-8 rounded-full border border-white/20" referrerPolicy="no-referrer" />
-                <span className="text-sm font-semibold">{user.displayName?.split(' ')[0]}</span>
-                <button onClick={handleLogout} className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/60 hover:text-red-400" title="Sign out">
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </nav>
+          <span className="text-base font-bold tracking-tight">
+            Caduceus <span className="gradient-text">CRM</span>
+          </span>
         </div>
       </header>
 

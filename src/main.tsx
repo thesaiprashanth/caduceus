@@ -10,6 +10,8 @@ import AgentsPage from './pages/Agents.tsx';
 import DealsPage from './pages/Deals.tsx';
 import NotificationPage from './pages/notification.tsx';
 import CRMDashboardPage from './pages/CRMDashboardPage.tsx';
+import LeadPipelinePage from './pages/LeadPipelinePage.tsx';
+import AutomationPage from './pages/AutomationPage.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -27,6 +29,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/deals" element={<DealsPage />} />
           <Route path="/notifications" element={<NotificationPage />} />
           <Route path="/crm-dashboard" element={<CRMDashboardPage />} />
+          <Route path="/lead-pipeline" element={<LeadPipelinePage />} />
+          <Route path="/automation" element={<AutomationPage />} />
           <Route path="/help-center" element={<Helpcenter />} />
         </Route>
       </Routes>
