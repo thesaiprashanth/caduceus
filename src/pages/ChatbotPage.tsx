@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -10,6 +11,9 @@ interface Message {
 }
 
 type FeatureMode = "think" | "search" | "more" | null;
+type LLMOption = "gemini" | "openai";
+
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const SparkleIcon = () => (
   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="2">
@@ -22,9 +26,11 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeMode, setActiveMode] = useState<FeatureMode>(null);
+  const [selectedLLM, setSelectedLLM] = useState<LLMOption>("gemini");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -50,15 +56,33 @@ export default function ChatPage() {
     setLoading(true);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
-    setTimeout(() => {
-      let responseText = "";
-      if (activeMode === "think") {
-        responseText = "Let me reason through this carefully:\n\n1. Analyzing the context of your query\n2. Cross-referencing your CRM data\n3. Formulating a structured recommendation\n\nHere is my assessment for: \"" + userMessage.content + "\"";
-      } else if (activeMode === "search") {
-        responseText = "Searched across your pipeline data.\n\nFound relevant records matching \"" + userMessage.content + "\". Here are the top insights based on current CRM activity.";
-      } else {
-        responseText = "Got it. Based on your query about \"" + userMessage.content + "\", here is what I recommend. You can also try Think or Search mode for more detailed analysis.";
+    try {
+      const history = messages.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        content: m.content,
+      }));
+
+      const response = await fetch(`${API_BASE_URL}/chatbot`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage.content,
+          mode: activeMode,
+          llm: selectedLLM,
+          history,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to fetch chatbot response.");
       }
+
+      const data: { reply?: string } = await response.json();
+      const responseText =
+        data.reply ||
+        "I'm sorry, I couldn't generate a response right now. Please try again.";
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -66,8 +90,18 @@ export default function ChatPage() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Chatbot Error:", error);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "Sorry, I ran into an error while connecting to the AI service. Please try again.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
       setLoading(false);
-    }, 1100);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -106,6 +140,8 @@ export default function ChatPage() {
 
         .sidebar { width: 220px; border-right: 1px solid rgba(255,255,255,0.07); background: #0A0E16; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 12px 14px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .back-btn { display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin-bottom: 12px; font-size: 12px; font-weight: 500; color: #7C8BA8; cursor: pointer; transition: all 0.15s; border-radius: 5px; }
+        .back-btn:hover { background: rgba(255,255,255,0.05); color: #C5CDE3; }
         .new-chat-btn { width: 100%; padding: 7px 12px; font-size: 12px; font-weight: 500; color: #E8EEF8; border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.04); display: flex; align-items: center; gap: 7px; transition: all 0.15s; }
         .new-chat-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
         .sidebar-section { padding: 10px 10px 4px; font-size: 10px; font-weight: 600; color: #4A5568; letter-spacing: 0.5px; text-transform: uppercase; }
@@ -177,6 +213,12 @@ export default function ChatPage() {
       <div className="chat-layout">
         <div className="sidebar">
           <div className="sidebar-header">
+            <div className="back-btn" onClick={() => navigate('/')}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10 12L6 8l4-4" />
+              </svg>
+              Home
+            </div>
             <button className="new-chat-btn">
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="8" y1="3" x2="8" y2="13" /><line x1="3" y1="8" x2="13" y2="8" />
@@ -309,6 +351,15 @@ export default function ChatPage() {
                       </svg>
                     )}
                     {mode!.charAt(0).toUpperCase() + mode!.slice(1)}
+                  </div>
+                ))}
+                {(["gemini", "openai"] as LLMOption[]).map((llm) => (
+                  <div
+                    key={llm}
+                    className={`tool-pill ${selectedLLM === llm ? "active" : ""}`}
+                    onClick={() => setSelectedLLM(llm)}
+                  >
+                    {llm === "openai" ? "ChatGPT" : "Gemini"}
                   </div>
                 ))}
                 <div className="spacer" />

@@ -120,101 +120,51 @@ export default function App() {
   };
 
   const handleExtract = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!handle) return;
+    e.preventDefault();
+    if (!handle) return;
 
-  setIsExtracting(true);
-  setData(null);
-  setAiAnalysis(null);
+    setIsExtracting(true);
+    setData(null);
+    setAiAnalysis(null);
 
-  try {
-    const response = await fetch("http://127.0.0.1:8000/extract", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: handle.replace("@", ""),
-      }),
-    });
+    // Simulate extraction delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const profile = await response.json();
-
-    const formattedData: ProfileData = {
-      username: profile.username,
-      fullName: profile.full_name || profile.username,
-      bio: profile.bio || "",
-      followers: profile.followers || 0,
-      following: profile.following || 0,
-      posts: profile.posts?.length || 0,
-      engagementRate: profile.engagement_rate || 0,
-      avgLikes:
-        profile.posts?.reduce((sum: number, p: any) => sum + (p.likes || 0), 0) /
-          (profile.posts?.length || 1) || 0,
-      avgComments:
-        profile.posts?.reduce((sum: number, p: any) => sum + (p.comments || 0), 0) /
-          (profile.posts?.length || 1) || 0,
-      profilePic:
-        profile.profile_pic ||
-        `https://ui-avatars.com/api/?name=${profile.username}&background=111827&color=fff`,
-      recentPosts:
-        profile.posts?.map((post: any, index: number) => ({
-          id: String(index),
-          imageUrl:
-            post.image_url ||
-            `https://picsum.photos/seed/${profile.username}-${index}/400/400`,
-          likes: post.likes || 0,
-          comments: post.comments || 0,
-          caption: post.caption || "",
-          date: "Recent",
-          engagement: post.engagement || 0,
-        })) || [],
-      growthData: [
-        { date: "Mon", followers: Math.max(0, (profile.followers || 0) - 500) },
-        { date: "Tue", followers: Math.max(0, (profile.followers || 0) - 350) },
-        { date: "Wed", followers: Math.max(0, (profile.followers || 0) - 250) },
-        { date: "Thu", followers: Math.max(0, (profile.followers || 0) - 150) },
-        { date: "Fri", followers: Math.max(0, (profile.followers || 0) - 75) },
-        { date: "Sat", followers: Math.max(0, (profile.followers || 0) - 25) },
-        { date: "Sun", followers: profile.followers || 0 },
+    // Mock Data for demonstration
+    const mockData: ProfileData = {
+      username: handle.replace('@', ''),
+      fullName: "Premium Brand Co.",
+      bio: "Elevating lifestyle through design and innovation. 🌿 | Est. 2020 | Worldwide Shipping 📦",
+      followers: 125400,
+      following: 842,
+      posts: 432,
+      engagementRate: 4.8,
+      avgLikes: 5800,
+      avgComments: 124,
+      profilePic: `https://picsum.photos/seed/${handle}/200/200`,
+      recentPosts: [
+        { id: '1', imageUrl: 'https://picsum.photos/seed/post1/400/400', likes: 6200, comments: 145, caption: "New collection dropping tomorrow! ✨ #lifestyle #design", date: "2h ago", engagement: 5.1 },
+        { id: '2', imageUrl: 'https://picsum.photos/seed/post2/400/400', likes: 4100, comments: 89, caption: "Morning routines that matter. ☕️", date: "1d ago", engagement: 3.4 },
+        { id: '3', imageUrl: 'https://picsum.photos/seed/post3/400/400', likes: 8900, comments: 312, caption: "Our best-seller is back in stock! Limited quantities. 🏃‍♂️", date: "3d ago", engagement: 7.2 },
+        { id: '4', imageUrl: 'https://picsum.photos/seed/post4/400/400', likes: 5400, comments: 92, caption: "Behind the scenes at our studio. 🎨", date: "5d ago", engagement: 4.5 },
       ],
+      growthData: [
+        { date: 'Mon', followers: 124100 },
+        { date: 'Tue', followers: 124350 },
+        { date: 'Wed', followers: 124800 },
+        { date: 'Thu', followers: 125100 },
+        { date: 'Fri', followers: 125250 },
+        { date: 'Sat', followers: 125350 },
+        { date: 'Sun', followers: 125400 },
+      ]
     };
 
-    setData(formattedData);
-
-    // Store data in the RAG vector DB
-    await fetch("http://127.0.0.1:8000/store", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: profile.username,
-        bio: profile.bio,
-        captions: profile.posts?.map((p: any) => p.caption) || [],
-      }),
-    });
-
-    // Get AI summary from your RAG endpoint
-    const analysisResponse = await fetch("http://127.0.0.1:8000/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        question:
-          "Give a CRM summary of this Instagram business including services, target audience, and lead quality.",
-      }),
-    });
-
-    const analysis = await analysisResponse.json();
-    setAiAnalysis(analysis.answer);
-  } catch (error) {
-    console.error("Error extracting profile:", error);
-  } finally {
+    setData(mockData);
     setIsExtracting(false);
-  }
-};
+    
+    // Auto-trigger AI Analysis
+    handleAnalyze(mockData);
+  };
 
   const handleAnalyze = async (profileData: ProfileData) => {
     setIsAnalyzing(true);
