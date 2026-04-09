@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { Send, Paperclip, Search, Sparkles, Bot, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Send, Paperclip, Clock, Search } from "lucide-react";
 import Logo from "../Assets/Logo.jpeg";
 
 interface Message {
@@ -13,7 +13,6 @@ interface Message {
 type FeatureMode = "think" | "search" | "more" | null;
 
 const API_BASE_URL = "http://127.0.0.1:8000";
-
 
 const CHIPS = ["Summarize open leads", "Draft follow-up email", "Top deals this month"];
 
@@ -28,7 +27,6 @@ export default function ChatPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,152 +86,189 @@ export default function ChatPage() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
+  const navigate = useNavigate();
+
   const toggleMode = (mode: FeatureMode) =>
     setActiveMode(prev => prev === mode ? null : mode);
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-[#0D1117] text-[#E8EEF8]"
-      style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" }}>
-      {/* ── Chat main ── */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+    /* h-screen + overflow-hidden anchors the layout to the viewport,
+       bypassing the parent <main>'s overflow-y-auto scroll container */
+    <div className="flex flex-col h-screen overflow-hidden bg-black text-zinc-200 font-sans antialiased">
 
-        {/* Chat header */}
-        <div className="h-11 shrink-0 border-b border-white/[0.07] flex items-center gap-2.5 px-5">
-          <div className="w-7 h-7 rounded-md overflow-hidden shrink-0">
-            <img src={Logo} alt="Caduceus" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-sm font-semibold text-[#E8EEF8]">AI Assistant</span>
-          <span className="text-xs text-[#4A5568]">· Caduceus CRM</span>
-          <div className="ml-auto flex gap-1">
-            <button className="w-7 h-7 rounded-md flex items-center justify-center text-[#4A5568] hover:bg-white/7 hover:text-[#C5CDE3] transition-colors">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="3" r="1.5" /><circle cx="3" cy="8" r="1.5" /><circle cx="12" cy="13" r="1.5" />
-                <path d="M4.5 8.8l6 3.5M4.5 7.2l6-3.5" />
-              </svg>
-            </button>
-            <button className="w-7 h-7 rounded-md flex items-center justify-center text-[#4A5568] hover:bg-white/7 hover:text-[#C5CDE3] transition-colors">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="3" cy="8" r="1.2" /><circle cx="8" cy="8" r="1.2" /><circle cx="13" cy="8" r="1.2" />
-              </svg>
-            </button>
-          </div>
+      {/* Header */}
+      <div className="shrink-0 h-12 border-b border-white/5 flex items-center gap-3 px-4">
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="w-8 h-8 rounded-md flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-colors shrink-0"
+          title="Go back"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+
+        <div className="w-px h-4 bg-white/10 shrink-0" />
+
+        <div className="w-7 h-7 rounded-lg overflow-hidden ring-1 ring-white/10 shrink-0">
+          <img src={Logo} alt="Caduceus" className="w-full h-full object-cover" />
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-white">AI Assistant</span>
+          <span className="text-xs text-zinc-600">· Caduceus CRM</span>
+        </div>
+        <div className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 ring-1 ring-violet-500/20 text-violet-400 text-[11px] font-medium">
+          <Sparkles className="w-3 h-3" strokeWidth={1.75} />
+          AI powered
+        </div>
+      </div>
 
-        {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 flex flex-col gap-4"
-          style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.08) transparent" }}>
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 gap-3 pb-10">
-              <div className="px-4 py-2 rounded-lg bg-[rgba(232,116,34,0.1)] border border-[rgba(232,116,34,0.2)] text-xs font-medium text-[#E87422]">
-                AI-powered assistant
-              </div>
-              <div className="text-[22px] font-semibold text-[#E8EEF8] tracking-tight">Welcome back, Jony</div>
-              <div className="text-sm text-[#4A5568]">Ask me anything about your pipeline or CRM</div>
-              <div className="flex gap-2 flex-wrap justify-center mt-1">
-                {CHIPS.map(chip => (
-                  <button
-                    key={chip}
-                    onClick={() => setInput(chip)}
-                    className="px-3.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-full text-xs text-[#7C8BA8] hover:border-[rgba(232,116,34,0.3)] hover:text-[#E87422] hover:bg-[rgba(232,116,34,0.06)] transition-colors"
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
+      {/* Messages — flex-1 + min-h-0 makes this fill remaining space and scroll internally */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto px-6 py-6 flex flex-col gap-5"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.06) transparent" }}
+      >
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-4 pb-16">
+            {/* Icon */}
+            <div className="w-14 h-14 rounded-2xl bg-zinc-900/60 ring-1 ring-white/5 flex items-center justify-center">
+              <Bot className="w-7 h-7 text-violet-400" strokeWidth={1.5} />
             </div>
-          ) : (
-            <>
-              {messages.map(msg => (
-                <div key={msg.id} className={`flex gap-2.5 items-start ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div className={`w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[10px] font-semibold mt-0.5 ${msg.role === "user"
-                      ? "bg-gradient-to-br from-[#E87422] to-[#C5531A] text-white"
-                      : "bg-[rgba(232,116,34,0.15)] border border-[rgba(232,116,34,0.2)] text-[#E87422]"
-                    }`}>
-                    {msg.role === "user" ? "J" : "AI"}
-                  </div>
-                  <div className={msg.role === "user" ? "items-end flex flex-col" : ""}>
-                    <div className={`max-w-[72%] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${msg.role === "user"
-                        ? "bg-[#E87422] text-white rounded-[10px_3px_10px_10px]"
-                        : "bg-[rgba(22,28,40,0.95)] border border-white/[0.07] text-[#C5CDE3] rounded-[3px_10px_10px_10px]"
-                      }`}>
-                      {msg.content}
-                    </div>
-                    <div className="text-[10px] text-[#4A5568] mt-1 px-0.5">{formatTime(msg.timestamp)}</div>
-                  </div>
-                </div>
-              ))}
-              {loading && (
-                <div className="flex gap-2.5 items-start">
-                  <div className="w-6 h-6 rounded-full bg-[rgba(232,116,34,0.15)] border border-[rgba(232,116,34,0.2)] text-[#E87422] flex items-center justify-center text-[10px] font-semibold shrink-0">AI</div>
-                  <div className="flex gap-1.5 px-3.5 py-3 bg-[rgba(22,28,40,0.95)] border border-white/[0.07] rounded-[3px_10px_10px_10px]">
-                    {[0, 200, 400].map(delay => (
-                      <span key={delay} className="w-1.5 h-1.5 rounded-full bg-[#4A5568] animate-pulse" style={{ animationDelay: `${delay}ms` }} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </>
-          )}
-        </div>
 
-        {/* Input zone */}
-        <div className="shrink-0 px-5 pb-4 pt-2.5 border-t border-white/[0.07]">
-          <div className="rounded-[10px] bg-[rgba(16,22,32,0.9)] border border-white/[0.1] focus-within:border-[rgba(232,116,34,0.4)] transition-colors">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask whatever you want…"
-              rows={1}
-              className="w-full bg-transparent border-none outline-none resize-none text-[#E8EEF8] text-sm px-3.5 pt-3 pb-1.5 min-h-[42px] max-h-[120px] leading-relaxed placeholder-white/20"
-            />
-            <div className="flex items-center gap-1.5 px-2.5 pb-2.5 pt-1">
-              {(["think", "search", "more"] as FeatureMode[]).map(mode => (
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-white tracking-tight">How can I help you?</h2>
+              <p className="text-sm text-zinc-500 mt-1">Ask anything about your pipeline or CRM data.</p>
+            </div>
+
+            {/* Chips */}
+            <div className="flex gap-2 flex-wrap justify-center mt-1">
+              {CHIPS.map(chip => (
                 <button
-                  key={mode}
-                  onClick={() => toggleMode(mode)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${activeMode === mode
-                      ? "bg-[rgba(232,116,34,0.1)] border-[rgba(232,116,34,0.35)] text-[#E87422]"
-                      : "bg-white/[0.04] border-white/[0.07] text-[#7C8BA8] hover:bg-white/[0.07] hover:text-[#C5CDE3] hover:border-white/[0.14]"
-                    }`}
+                  key={chip}
+                  onClick={() => setInput(chip)}
+                  className="px-3.5 py-1.5 rounded-full text-xs text-zinc-400 bg-zinc-900/60 ring-1 ring-white/5 hover:ring-violet-500/30 hover:text-violet-300 hover:bg-violet-500/5 transition-colors"
                 >
-                  {mode === "think" && (
-                    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="8" cy="8" r="6" /><path d="M8 5v3l2 2" />
-                    </svg>
-                  )}
-                  {mode === "search" && <Search className="w-2.5 h-2.5" />}
-                  {mode === "more" && (
-                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-                      <circle cx="3" cy="8" r="1.2" /><circle cx="8" cy="8" r="1.2" /><circle cx="13" cy="8" r="1.2" />
-                    </svg>
-                  )}
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  {chip}
                 </button>
               ))}
+            </div>
+            <div ref={messagesEndRef} />
+          </div>
+        ) : (
+          <>
+            {messages.map(msg => (
+              <div
+                key={msg.id}
+                className={`flex gap-3 items-start ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+              >
+                {/* Avatar */}
+                <div className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[10px] font-semibold mt-0.5 ${
+                  msg.role === "user"
+                    ? "bg-zinc-700 text-zinc-200"
+                    : "bg-violet-500/15 ring-1 ring-violet-500/25 text-violet-400"
+                }`}>
+                  {msg.role === "user" ? "S" : "AI"}
+                </div>
 
-              <div className="ml-auto flex items-center gap-1.5">
-                <input ref={fileInputRef} type="file" className="hidden" onChange={() => { }} />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-[#7C8BA8] hover:bg-white/[0.08] hover:text-[#C5CDE3] transition-colors"
-                >
-                  <Paperclip className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={sendMessage}
-                  disabled={!input.trim() || loading}
-                  className="w-7 h-7 rounded-md bg-[#E87422] flex items-center justify-center text-white hover:bg-[#C5531A] disabled:bg-[rgba(232,116,34,0.3)] disabled:cursor-not-allowed transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                </button>
+                {/* Bubble */}
+                <div className={msg.role === "user" ? "flex flex-col items-end" : ""}>
+                  <div className={`max-w-[68%] px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words rounded-xl ${
+                    msg.role === "user"
+                      ? "bg-zinc-800 text-zinc-100 rounded-tr-sm"
+                      : "bg-zinc-900/60 ring-1 ring-white/5 text-zinc-300 rounded-tl-sm"
+                  }`}>
+                    {msg.content}
+                  </div>
+                  <div className="text-[10px] text-zinc-600 mt-1 px-1">{formatTime(msg.timestamp)}</div>
+                </div>
               </div>
+            ))}
+
+            {/* Typing indicator */}
+            {loading && (
+              <div className="flex gap-3 items-start">
+                <div className="w-7 h-7 rounded-full bg-violet-500/15 ring-1 ring-violet-500/25 text-violet-400 flex items-center justify-center text-[10px] font-semibold shrink-0">
+                  AI
+                </div>
+                <div className="flex gap-1.5 px-4 py-3.5 bg-zinc-900/60 ring-1 ring-white/5 rounded-xl rounded-tl-sm">
+                  {[0, 150, 300].map(delay => (
+                    <span
+                      key={delay}
+                      className="w-1.5 h-1.5 rounded-full bg-zinc-600 animate-pulse"
+                      style={{ animationDelay: `${delay}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
+        )}
+      </div>
+
+      {/* Input zone */}
+      <div className="shrink-0 px-6 pb-5 pt-3 border-t border-white/5">
+        <div className="rounded-xl bg-zinc-900/60 ring-1 ring-white/8 focus-within:ring-violet-500/30 transition-all">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask whatever you want…"
+            rows={1}
+            className="w-full bg-transparent border-none outline-none resize-none text-zinc-200 text-sm px-4 pt-3.5 pb-2 min-h-[44px] max-h-[120px] leading-relaxed placeholder-zinc-600"
+          />
+
+          {/* Toolbar */}
+          <div className="flex items-center gap-1.5 px-3 pb-3 pt-1">
+            {/* Mode toggles */}
+            {(["think", "search", "more"] as FeatureMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => toggleMode(mode)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium ring-1 transition-colors ${
+                  activeMode === mode
+                    ? "bg-violet-500/10 ring-violet-500/25 text-violet-300"
+                    : "bg-white/[0.03] ring-white/6 text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-300"
+                }`}
+              >
+                {mode === "think" && (
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="8" cy="8" r="6" /><path d="M8 5v3l2 2" />
+                  </svg>
+                )}
+                {mode === "search" && <Search className="w-2.5 h-2.5" />}
+                {mode === "more" && (
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                    <circle cx="3" cy="8" r="1.2" /><circle cx="8" cy="8" r="1.2" /><circle cx="13" cy="8" r="1.2" />
+                  </svg>
+                )}
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </button>
+            ))}
+
+            {/* Right actions */}
+            <div className="ml-auto flex items-center gap-1.5">
+              <input ref={fileInputRef} type="file" className="hidden" onChange={() => {}} />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-7 h-7 rounded-md bg-white/[0.03] ring-1 ring-white/6 flex items-center justify-center text-zinc-500 hover:bg-white/[0.07] hover:text-zinc-300 transition-colors"
+              >
+                <Paperclip className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={sendMessage}
+                disabled={!input.trim() || loading}
+                className="w-7 h-7 rounded-md bg-violet-600 flex items-center justify-center text-white hover:bg-violet-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
-          <p className="text-center mt-1.5 text-[10px] text-[#2E3748]">AI can make mistakes. Verify important information.</p>
         </div>
+
+        <p className="text-center mt-2 text-[10px] text-zinc-700">
+          AI can make mistakes. Verify important information.
+        </p>
       </div>
     </div>
   );
