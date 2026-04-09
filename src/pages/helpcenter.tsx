@@ -7,12 +7,12 @@ import {
     Users,
     ChevronDown,
     Plus,
-    Target,
     Zap,
     ShieldCheck,
     Instagram,
     ArrowUpRight
 } from 'lucide-react';
+import logo from '../Assets/Logo.jpeg';
 
 interface AccordionItemProps {
     title: string;
@@ -69,7 +69,7 @@ export default function HelpCenterPage() {
         {
             title: "AI Knowledge",
             description: "Understand how Gemini AI analyzes relationship quality and generates personalized leads.",
-            icon: <Target className="w-8 h-8 text-brand-primary" />,
+            icon: <img src={logo} alt="Caduceus" className="w-8 h-8 object-cover rounded-lg" />,
             color: "bg-brand-primary/10",
             borderColor: "border-brand-primary/20"
         },

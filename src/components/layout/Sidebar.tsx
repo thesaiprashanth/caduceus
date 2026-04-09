@@ -1,11 +1,12 @@
 import React from 'react';
 import {
   Search, Bot, Users, FileText, Briefcase, Sparkles, UserCheck,
-  GitMerge, Building2, Compass, HelpCircle, Moon,
+  GitMerge, Building2, Compass, HelpCircle,
   Bell,
   Handshake
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Logo from '../../Assets/Logo.jpeg';
 
 const navItems = [
   { icon: Bot, label: 'Home', path: '/' },
@@ -21,8 +22,8 @@ export default function Sidebar() {
   return (
     <aside className="w-60 shrink-0 bg-zinc-950 border-r border-white/5 flex flex-col h-screen sticky top-0">
       <div className="px-4 pt-4 pb-3 flex items-center justify-between">
-        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center ring-1 ring-white/10">
-          <Moon className="w-4 h-4 text-zinc-300" />
+        <div className="w-8 h-8 rounded-lg overflow-hidden ring-1 ring-white/10">
+          <img src={Logo} alt="Caduceus" className="w-full h-full object-cover" />
         </div>
         <button className="w-8 h-8 rounded-md hover:bg-white/5 flex items-center justify-center text-zinc-500">
           <Search className="w-4 h-4" />
