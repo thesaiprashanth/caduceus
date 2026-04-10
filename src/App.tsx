@@ -637,7 +637,7 @@ const handleAnalyze = async (profileData: ProfileData) => {
               {/* AI Analysis Section */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
-                  <div className="glass-card overflow-hidden">
+                  {/* <div className="glass-card overflow-hidden">
                     <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Sparkles className="w-6 h-6 text-brand-secondary" />
@@ -661,7 +661,7 @@ const handleAnalyze = async (profileData: ProfileData) => {
                         <p className="text-white/40 italic">Waiting for analysis...</p>
                       )}
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Recent Posts */}
                   <div>

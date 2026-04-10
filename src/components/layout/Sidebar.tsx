@@ -92,7 +92,7 @@ export default function Sidebar() {
       {/* User row */}
       <div className="border-t border-white/5 px-3 py-3 flex items-center gap-2.5">
         <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center text-xs font-semibold text-zinc-200 shrink-0">S</div>
-        <span className="text-sm text-zinc-300 flex-1 truncate">A D Suriya</span>
+        <span className="text-sm text-zinc-300 flex-1 truncate">Sai</span>
         <button
           onClick={handleLogout}
           className="w-7 h-7 rounded-md hover:bg-white/5 flex items-center justify-center text-zinc-500 hover:text-red-400 transition-colors"
