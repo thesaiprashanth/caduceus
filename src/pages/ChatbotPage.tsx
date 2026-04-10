@@ -54,14 +54,14 @@ export default function ChatPage() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      const history = messages.map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        content: m.content,
-      }));
+      const chatMessages = [
+        ...messages.map(m => ({ role: m.role, content: m.content })),
+        { role: "user", content: userMsg.content },
+      ];
       const res = await fetch(`${API_BASE_URL}/chatbot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg.content, mode: activeMode, history }),
+        body: JSON.stringify({ messages: chatMessages, mode: activeMode }),
       });
       const data: { reply?: string } = res.ok ? await res.json() : {};
       setMessages(prev => [...prev, {

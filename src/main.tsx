@@ -12,11 +12,13 @@ import NotificationPage from './pages/notification.tsx';
 import CRMDashboardPage from './pages/CRMDashboardPage.tsx';
 import LeadPipelinePage from './pages/LeadPipelinePage.tsx';
 import AutomationPage from './pages/AutomationPage.tsx';
+import { DealsProvider } from './context/DealsContext.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
+      <DealsProvider>
       <Routes>
         {/* Standalone pages (no sidebar) */}
         <Route path="/login" element={<Login />} />
@@ -34,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/help-center" element={<Helpcenter />} />
         </Route>
       </Routes>
+      </DealsProvider>
     </BrowserRouter>
   </StrictMode>,
 );

@@ -13,11 +13,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ChatMessage(BaseModel):
+    role: str   # "user" | "assistant" | "system"
+    content: str
+
 class ChatRequest(BaseModel):
-    message: str
+    messages: list[ChatMessage]
     mode: str | None = None
     llm: str | None = None
-    history: list = []
 
 OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
 
@@ -48,19 +51,9 @@ async def chatbot(request: ChatRequest):
     }
 ]
 
-        # Add history
-        for msg in request.history:
-            role = "assistant" if msg.get("role") == "model" else "user"
-            messages.append({
-                "role": role,
-                "content": msg.get("content", "")
-            })
-
-        # Add current user message
-        messages.append({
-            "role": "user",
-            "content": request.message
-        })
+        # Append incoming messages (history + current user message)
+        for msg in request.messages:
+            messages.append({"role": msg.role, "content": msg.content})
 
         payload = {
             "model": "llama3.2",
