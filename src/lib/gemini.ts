@@ -25,6 +25,68 @@ const fetchChatbotReply = async (payload: {
   return data.reply || "";
 };
 
+export async function compareProfiles(profile1: any, profile2: any) {
+  const prompt = `
+You are an expert Instagram CRM analyst.
+
+Compare these two Instagram business profiles and give:
+
+1. Which profile has stronger brand presence
+2. Which has better engagement
+3. Which is better for partnerships or outreach
+4. Their differences in target audience and content strategy
+5. A final verdict on which account performs better and why
+
+Profile 1:
+Username: @${profile1.username}
+Bio: ${profile1.bio}
+Followers: ${profile1.followers}
+Engagement Rate: ${profile1.engagementRate}%
+Average Likes: ${profile1.avgLikes}
+Average Comments: ${profile1.avgComments}
+
+Recent captions:
+${profile1.recentPosts.map((p: any) => `- ${p.caption}`).join("\n")}
+
+Profile 2:
+Username: @${profile2.username}
+Bio: ${profile2.bio}
+Followers: ${profile2.followers}
+Engagement Rate: ${profile2.engagementRate}%
+Average Likes: ${profile2.avgLikes}
+Average Comments: ${profile2.avgComments}
+
+Recent captions:
+${profile2.recentPosts.map((p: any) => `- ${p.caption}`).join("\n")}
+
+Respond in markdown with headings and bullet points.
+`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  return (
+    data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+    "Could not generate comparison."
+  );
+}
+
 export const analyzeProfile = async (profileData: any) => {
   const prompt = `
     You are a world-class CRM Specialist and Business Intelligence Analyst. 

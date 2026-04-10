@@ -101,6 +101,10 @@ export default function App() {
   const [chatMessage, setChatMessage] = useState('');
   const [chatHistory, setChatHistory] = useState<{ role: string, parts: string }[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [compareHandle, setCompareHandle] = useState('');
+const [compareData, setCompareData] = useState<ProfileData | null>(null);
+const [comparisonAnalysis, setComparisonAnalysis] = useState<string | null>(null);
+const [isComparing, setIsComparing] = useState(false);
 
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -140,9 +144,11 @@ export default function App() {
   e.preventDefault();
   if (!handle) return;
 
-  setIsExtracting(true);
-  setData(null);
-  setAiAnalysis(null);
+ setIsExtracting(true);
+setData(null);
+setAiAnalysis(null);
+setCompareData(null);
+setComparisonAnalysis(null);
 
   try {
     console.log("Calling /extract...");
@@ -236,6 +242,76 @@ const handleAnalyze = async (profileData: ProfileData) => {
     setAiAnalysis("Failed to generate AI analysis.");
   } finally {
     setIsAnalyzing(false);
+  }
+};
+
+const handleCompare = async () => {
+  if (!compareHandle || !data) return;
+
+  try {
+    setIsComparing(true);
+
+    const response = await fetch("http://127.0.0.1:8000/extract", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: compareHandle.replace("@", ""),
+      }),
+    });
+
+    const profile = await response.json();
+
+    const processedCompare: ProfileData = {
+      username: profile.username,
+      fullName: profile.full_name || profile.username,
+      bio: profile.bio || "",
+      followers: profile.followers || 0,
+      following: profile.following || 0,
+      posts: profile.posts?.length || 0,
+      engagementRate: profile.engagement_rate || 0,
+      avgLikes: profile.avg_likes || 0,
+      avgComments: profile.avg_comments || 0,
+      profilePic: profile.profile_pic,
+      recentPosts: profile.posts?.map((post: any, i: number) => ({
+        id: String(i),
+        imageUrl: post.image_url,
+        likes: post.likes || 0,
+        comments: post.comments || 0,
+        caption: post.caption || "",
+        date: "Recent",
+        engagement: 0,
+      })) || [],
+      growthData: [],
+    };
+
+    setCompareData(processedCompare);
+
+    const analysis = `
+# Profile Comparison
+
+## Stronger Brand Presence
+${data.followers > processedCompare.followers ? `@${data.username}` : `@${processedCompare.username}`}
+
+## Better Engagement
+${data.engagementRate > processedCompare.engagementRate ? `@${data.username}` : `@${processedCompare.username}`}
+
+## Audience Difference
+- @${data.username}: ${data.bio}
+- @${processedCompare.username}: ${processedCompare.bio}
+
+## Recommendation
+${data.followers > processedCompare.followers
+  ? `@${data.username} has stronger reach and market authority.`
+  : `@${processedCompare.username} has stronger reach and market authority.`}
+`;
+
+    setComparisonAnalysis(analysis);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setIsComparing(false);
   }
 };
 
@@ -410,13 +486,36 @@ const handleAnalyze = async (profileData: ProfileData) => {
                 onChange={(e) => setHandle(e.target.value)}
                 className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-lg outline-none"
               />
-              <button
-                disabled={isExtracting}
-                className="bg-white text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50"
-              >
-                {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Extract"}
-                <ArrowRight className="w-5 h-5" />
-              </button>
+              <input
+  type="text"
+  placeholder="Compare with another profile (e.g. @adidas)"
+  value={compareHandle}
+  onChange={(e) => setCompareHandle(e.target.value)}
+  className="flex-1 bg-transparent border-none focus:ring-0 px-4 py-3 text-lg outline-none mt-4 outline-none"
+/>
+             <div className="flex items-center gap-3">
+  <button
+    type="submit"
+    disabled={isExtracting}
+    className="bg-white text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/90 transition-all disabled:opacity-50"
+  >
+    {isExtracting ? (
+      <Loader2 className="w-5 h-5 animate-spin" />
+    ) : (
+      "Extract"
+    )}
+    <ArrowRight className="w-5 h-5" />
+  </button>
+
+  <button
+    type="button"
+    onClick={handleCompare}
+    disabled={!data || !compareHandle || isComparing}
+    className="bg-brand-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-primary/90 transition-all disabled:opacity-50"
+  >
+    {isComparing ? "Comparing..." : "Compare"}
+  </button>
+</div>
             </div>
           </motion.form>
         </section>
@@ -540,6 +639,187 @@ const handleAnalyze = async (profileData: ProfileData) => {
                   </div>
                 </div>
               </div>
+
+              {compareData && (
+  <div className="glass-card p-8 mt-8">
+    <div className="flex items-center justify-between mb-8">
+      <h3 className="text-3xl font-bold">Profile Battle</h3>
+      <span className="px-4 py-2 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-sm font-bold uppercase tracking-widest">
+        AI Comparison
+      </span>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      {/* Profile 1 */}
+      <div className={cn(
+        "rounded-3xl border p-6 transition-all",
+        data.followers > compareData.followers
+          ? "border-green-500/40 bg-green-500/5"
+          : "border-white/10 bg-white/5"
+      )}>
+        <div className="flex items-center gap-4 mb-6">
+          <img
+            src={data.profilePic}
+            alt={data.username}
+            className="w-16 h-16 rounded-full object-cover"
+            onError={handleImageError}
+          />
+          <div>
+            <h4 className="text-2xl font-bold">@{data.username}</h4>
+            <p className="text-white/50">{data.fullName}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Followers</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{data.followers.toLocaleString()}</span>
+              {data.followers > compareData.followers && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Engagement</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{data.engagementRate}%</span>
+              {data.engagementRate > compareData.engagementRate && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Avg Likes</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{data.avgLikes.toLocaleString()}</span>
+              {data.avgLikes > compareData.avgLikes && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Avg Comments</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{data.avgComments.toLocaleString()}</span>
+              {data.avgComments > compareData.avgComments && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile 2 */}
+      <div className={cn(
+        "rounded-3xl border p-6 transition-all",
+        compareData.followers > data.followers
+          ? "border-green-500/40 bg-green-500/5"
+          : "border-white/10 bg-white/5"
+      )}>
+        <div className="flex items-center gap-4 mb-6">
+          <img
+            src={compareData.profilePic}
+            alt={compareData.username}
+            className="w-16 h-16 rounded-full object-cover"
+            onError={handleImageError}
+          />
+          <div>
+            <h4 className="text-2xl font-bold">@{compareData.username}</h4>
+            <p className="text-white/50">{compareData.fullName}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Followers</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{compareData.followers.toLocaleString()}</span>
+              {compareData.followers > data.followers && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Engagement</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{compareData.engagementRate}%</span>
+              {compareData.engagementRate > data.engagementRate && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Avg Likes</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{compareData.avgLikes.toLocaleString()}</span>
+              {compareData.avgLikes > data.avgLikes && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-white/50">Avg Comments</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold">{compareData.avgComments.toLocaleString()}</span>
+              {compareData.avgComments > data.avgComments && (
+                <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-bold">
+                  Winner
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Final Winner */}
+    <div className="rounded-3xl p-6 bg-gradient-to-r from-brand-primary/10 to-brand-accent/10 border border-brand-primary/20 text-center">
+      <p className="text-sm uppercase tracking-[0.3em] text-white/40 mb-2">
+        Overall Winner
+      </p>
+
+      <h2 className="text-4xl font-bold gradient-text">
+        @{(
+          data.followers +
+            data.engagementRate * 1000 +
+            data.avgLikes +
+            data.avgComments >
+          compareData.followers +
+            compareData.engagementRate * 1000 +
+            compareData.avgLikes +
+            compareData.avgComments
+            ? data.username
+            : compareData.username
+        )}
+      </h2>
+
+      <p className="text-white/60 mt-3">
+        Stronger overall performance based on reach, engagement, and audience interaction.
+      </p>
+    </div>
+  </div>
+)}
 
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
