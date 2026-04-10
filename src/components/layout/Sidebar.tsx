@@ -15,14 +15,11 @@ const navGroups = [
     items: [
       { icon: Home, label: 'Home', path: '/' },
       { icon: BarChart3, label: 'CRM Dashboard', path: '/crm-dashboard' },
-      { icon: GitMerge, label: 'Lead Pipeline', path: '/lead-pipeline' },
-      { icon: Zap, label: 'Automation', path: '/automation' },
     ],
   },
   {
     label: 'OPERATIONS',
     items: [
-      { icon: Bot, label: 'Agents', path: '/agents' },
       { icon: Users, label: 'Conversations', path: '/chatbot' },
       { icon: Handshake, label: 'Deals', path: '/deals' },
       { icon: Sparkles, label: 'Recommendations', path: '/notifications' },
